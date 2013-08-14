@@ -21,10 +21,11 @@
      ,@body
      (delete-package *package*)))
 
-(defun expand (input &key (output *standard-output*))
-  "stream (:output stream) -> IO
+(defun expand (input &key (output *standard-output*) (recursive-expansion nil))
+  "Stream (:output Stream) (recursive-expansion Boolean) -> nil
+Copy INPUT to OUTPUT while expanding any template variables or expressions (as delimited by *TEMPLATE-DELIMITER* and *DELIMITER-ESCAPE*). Return the number of template expansions performed.
 
-Copy INPUT to OUTPUT while expanding any template variables or expressions (as delimited by *TEMPLATE-DELIMITER* and *DELIMITER-ESCAPE*).
+If RECURSIVE-EXPANSION is true, expand any template variables or expressions that may be present in a tempalte variable or expansion.
 
 The evaluation of any expression to be expanded takes place in *PACKAGE*, which can be set to reflect a particular environment with WITH-ENV."
   (iter (for c = (read-char input nil 'eof))
@@ -33,27 +34,25 @@ The evaluation of any expression to be expanded takes place in *PACKAGE*, which 
 	  ((char= c *delimiter-escape*)
 	   (escape-chars input output))
 	  ((char= c *template-delimiter*)
-	   (expand-template input output))
-	  (t (write-char c output)))))
+	   (expand-template input output recursive-expansion))
+	  (t (write-char c output)))))v
 
-(defun expand-string-to-string (input)
-  "string -> string
-
+(defun expand-string-to-string (input &key (recursive-expansion nil))
+  "String -> String
 Like EXPAND, but inputs and outputs strings."
   (with-input-from-string (in input)
     (with-output-to-string (out)
-      (expand in :output out))))
+      (expand in :output out
+	      :recursive-expansion recursive-expansion))))
 
 ;;;; ### Private
 (defun escape-chars (input output)
-  "stream stream -> IO
-
+  "Stream Stream -> nil
 Determine what characters need to be escaped, and print them to OUTPUT. The INPUT stream is positioned immediately after a *DELIMITER-ESCAPE* character.
 
 Only *TEMPLATE-DELIMITER* characters need to be escaped, so if, after the escape character there is not a template delimiter, possibly preceeded by more escape characters, but with nothing in between, then this function should print anything read to OUTPUT, unmodified.
 
-Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* character, in which case, they can also be escaped. In general, an even number of *DELIMITER-ESCAPE* characters means that only the escape characters themselves are being escaped, while an odd number means that the template character is being escaped.
-"
+Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* character, in which case, they can also be escaped. In general, an even number of *DELIMITER-ESCAPE* characters means that only the escape characters themselves are being escaped, while an odd number means that the template character is being escaped."
   (let* ((read (list *delimiter-escape*))
 	 (escapers 1)
 	 (out (iter (for c = (read-char input nil 'eof))
@@ -76,17 +75,15 @@ Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* c
     (iter (for c in (reverse out))
 	  (write-char c output))))
 
-(defun expand-template (input output)
-  "stream stream -> IO
-
-The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into OUTPUT if such template exists.
+(defun expand-template (input output recursive-expansion)
+  "Stream Stream -> Boolean
+The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into OUTPUT if such template exists. Return true if an expansion was made.
 
 If the next character in INPUT is non-existant, whitespace, or a digit, the *TEMPLATE-DELIMITER* was not actually indicating the presense of a template, and so the delimiter should be written into OUTPUT.
 
 If the following character in INPUT is #\(, it is assumed to belong to a READable expression. 
 
-If the following character in INPUT is anything else, it may be the start of a variable. If none of the characters until the next *TEMPLATE-DELIMITER* are whitespace, then it is assumed to be a variable and expanded. If whitespace is present, the characters that were read from INPUT should be printed to OUTPUT.
-"
+If the following character in INPUT is anything else, it may be the start of a variable. If none of the characters until the next *TEMPLATE-DELIMITER* are whitespace, then it is assumed to be a variable and expanded. If whitespace is present, the characters that were read from INPUT should be printed to OUTPUT."
   (let+ ((peek (peek-char nil input nil 'eof))
 	 (read-in (list *template-delimiter*))
 	 ((&flet backtrack ()
@@ -113,29 +110,30 @@ If the following character in INPUT is anything else, it may be the start of a v
 	       (digit-char-p peek))
 	   (backtrack))
 	  ((char= peek #\()
-	   (expand-expression (read input) output))
-	  (t (expand-expression (expand-variable-or-backtrack) output)))))
+	   (expand-expression (read input) output recursive-expansion))
+	  (t (expand-expression (expand-variable-or-backtrack) output recursive-expansion)))))
 
-(defun expand-expression (expr output)
-  "expr stream -> IO
-
+(defun expand-expression (expr output recursive-expansion)
+  "expr Stream -> nil
 Print the evaluationof the expression EXPR, aesthetically, to OUTPUT. If EXPR evaluates to a list it is assumed to be a list of strings, which will be concatenated."
-  (let ((e (eval expr)))
-    (format output "~a" (if (listp e)
-			    (concatenate 'string (flatten e))
-			    e))))
+  (let+ ((e (eval expr))
+	 (expanded-string (format nil "~a" (if (listp e)
+					       (concatenate 'string (flatten e))
+					       e))))
+    (if recursive-expansion
+	(with-open-stream (s (make-string-input-stream expanded-string))
+	  (expand s :output output :recursive-expansion t))
+	(princ expanded-string output))))
 
 ;;;; ### Util
 (defun times (n elt)
-  "natural x -> (x)
-
+  "Natural X -> (X)
 Return a list of n ELTs."
   (iter (for x from 0 below n)
 	(collect elt)))
 
 (defun whitespace-char-p (char)
-  "character -> boolean
-
+  "Character -> Boolean
 Return true if CHAR is a whitespace character."
   (if (find char '(#\Space #\Newline #\Tab) :test #'char=)
       t))

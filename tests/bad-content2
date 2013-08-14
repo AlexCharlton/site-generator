@@ -1,0 +1,18 @@
+site-generator
+
+:template
+main.html
+
+:nav :lang :en
+* [Home]() 
+* [About site-generator]($(address "/about")$)
+
+:nav :lang :fr
+* [Accueil]() 
+* [À propos de site-generator]($(address "/about")$)
+
+:footer-text :lang :en
+This is the end of the page$(when title (write " \"" title "\" (these should be curly quotes)")$. 
+
+:footer-text :lang :fr
+Ceci est la fin de la page$(when title (write " \"" title "\"")$.

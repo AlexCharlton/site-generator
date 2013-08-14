@@ -5,14 +5,12 @@
   :description "Describe site-generator here"
   :author "Alex Charlton <alex.n.charlton@gmail.com>"
   :license "BSD-2"
-  :depends-on (:let-plus :alexandria :iterate :hunchentoot :com.dvlsoft.clon :inferior-shell)
+  :depends-on (:let-plus :alexandria :iterate :hunchentoot :com.dvlsoft.clon :inferior-shell :cl-ppcre :cl-fad)
   :components ((:file "package")
 	       (:file "templates")
+	       (:file "content")
 	       (:file "publish")
 	       (:file "preview")
-	       (:file "locales")
-	       (:file "config")
-	       (:file "markup")
                (:file "site-generator"))
   :in-order-to ((test-op (load-op :site-generator-test)))
   :perform (test-op :after (op c)

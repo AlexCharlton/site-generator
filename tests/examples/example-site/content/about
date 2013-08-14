@@ -1,0 +1,14 @@
+:template
+other.html
+
+:title lang=en
+About site-generator
+
+:title lang=fr
+À propos de site-generator
+
+:content lang=en markup=raw
+<p>This is *another* (the asterisks are deliberate) page that uses a different template.</p>
+
+:content lang=fr
+Ceci est un autre page qui utilise un template différent.
