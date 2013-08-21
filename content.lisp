@@ -62,6 +62,8 @@
 "The list of variables that are related to configuration and are not treated as content, i.e. they are not considered to belong to a language and will not be marked up. Variables set to nil will be parsed like content and are present to ensure that these variables can be excluded from content.")
 
 (defun get-language (env)
+  "Plist -> Keyword
+Return currently active language."
   (or (getf env :lang)
       (getf *environment* :default-language)))
 
@@ -80,10 +82,10 @@ Given the DATA with NAME, determine the type of data and return its value, with 
 	    (values (first data) :content (merge-plists (rest data) defaults))))))
 
 (defun get-data (name &optional lang (env *environment*))
-  "Keyword Plist &optional Keyword -> (values Data Type Args) Or nil
+  "Keyword Plist &optional Keyword Plist -> (values Data Type Args) Or nil
 Where Type is a keyword and Args is a plist.
 
-Given the NAME, return the piece of configuration or content data from *ENVIRONMENT*."
+Given the NAME, return the piece of configuration or content data from ENV."
   (let ((lang (or lang (get-language env)))
 	(data (getf env name)))
     (when data
@@ -103,6 +105,8 @@ The exception to these merging rules is for the element :DEFAULT, which is merge
     env-base))
 
 (defun merge-defaults (default-new default-base)
+  "Plist Plist -> Plist
+Merge two :DEFAULT plists."
   (let ((base (copy-list default-base)))
     (iter (for (k v) on default-new by #'cddr)
 	  (setf (getf base k)

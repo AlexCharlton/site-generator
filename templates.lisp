@@ -80,8 +80,8 @@ Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* c
 	  (write-char c output))))
 
 (defun expand-template (input output)
-  "Stream Stream -> Boolean
-The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into OUTPUT if such template exists. Return true if an expansion was made.
+  "Stream Stream -> nil
+The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into OUTPUT if such template exists.
 
 If the next character in INPUT is non-existant, whitespace, or a digit, the *TEMPLATE-DELIMITER* was not actually indicating the presense of a template, and so the delimiter should be written into OUTPUT.
 
@@ -118,10 +118,10 @@ If the following character in INPUT is anything else, it may be the start of a v
 	  (t (expand-expression (expand-variable-or-backtrack) output)))))
 
 (defun expand-expression (expr output)
-  "expr Stream -> nil
-Print the evaluationof the expression EXPR, aesthetically, to OUTPUT. If EXPR evaluates to a list it is assumed to be a list of strings, which will be concatenated.
+  "Expr Stream -> nil
+Print the evaluation of the expression EXPR, aesthetically, to OUTPUT. If EXPR evaluates to a list it is assumed to be a list of strings, which will be concatenated. The expansions are then recusively expanded.
 
-All top level expansions should be marked up as appropriate, except for INCLUDE statements."
+All top level variable expansions should be marked up as appropriate, except for INCLUDE statements."
   (let+ ((e (eval expr))
 	 (include? (and (listp expr) (equal (first expr) 'include)))
 	 (expanded-string (format nil "~a" (if (listp e)
@@ -131,8 +131,7 @@ All top level expansions should be marked up as appropriate, except for INCLUDE 
 				(expand-string-to-string expanded-string))))
     (with-input-from-string
 	(in (if (and *toplevel-expansion*
-		     (symbolp expr)
-		     (not include?))
+		     (symbolp expr))
 		(let+ ((key (string->keyword (symbol-name expr)))
 		       ((&values data type args) (get-data key)))
 		  (apply #'process-content recursive-expansion args))
