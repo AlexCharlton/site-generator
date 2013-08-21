@@ -7,8 +7,9 @@
   :license "BSD-2"
   :depends-on (:let-plus :alexandria :iterate :hunchentoot :com.dvlsoft.clon :inferior-shell :cl-ppcre :cl-fad)
   :components ((:file "package")
-	       (:file "templates")
+	       (:file "utility")
 	       (:file "content")
+	       (:file "templates")
 	       (:file "publish")
 	       (:file "preview")
                (:file "site-generator"))

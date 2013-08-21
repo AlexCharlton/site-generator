@@ -13,37 +13,41 @@
 (defvar *delimiter-escape* #\\
   "The character that indicates that a *TEMPLATE-DELIMITER* should be escaped. This will also escape other *DELIMITER-ESCAPE* characters but only when immediately preceding a *TEMPLATE-DELIMITER*.")
 
-(defmacro with-env ((env &key (use '(:cl :iterate :site-generator))) &body body)
-  "Evaluate the BODY in a new anonymous package, using USE and filled with values associated with the the non-keyworded symbols in the plist ENV. For instance, when env is '(:foo 'bar), the symbol FOO in this new package is set to 'BAR."
-  `(let ((*package* (defpackage ,(gensym) ,(cons :use use))))
-     (iter (for (var value) on ,env by #'cddr)
-	   (setf (symbol-value (intern (symbol-name var))) value))
+(defvar *toplevel-expansion* t)
+
+(defmacro with-env (&body body)
+  "Evaluate the BODY in a new anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
+  `(let ((*package* (defpackage ,(gensym "environment")
+		      ,(cons :use (getf *environment* :use)))))
+     (iter (for (var val) on *environment* by #'cddr)
+	   (let+ (((&values data type args) (destructure-data var val)))
+	     (declare (ignore args))
+	     (when (eq type :content)
+	       (setf (symbol-value (intern (symbol-name var))) data))))
      ,@body
      (delete-package *package*)))
 
-(defun expand (input &key (output *standard-output*) (recursive-expansion nil))
-  "Stream (:output Stream) (recursive-expansion Boolean) -> nil
+(defun expand (input &key (output *standard-output*))
+  "Stream (:output Stream) -> nil
 Copy INPUT to OUTPUT while expanding any template variables or expressions (as delimited by *TEMPLATE-DELIMITER* and *DELIMITER-ESCAPE*). Return the number of template expansions performed.
 
-If RECURSIVE-EXPANSION is true, expand any template variables or expressions that may be present in a tempalte variable or expansion.
-
-The evaluation of any expression to be expanded takes place in *PACKAGE*, which can be set to reflect a particular environment with WITH-ENV."
+The evaluation of any expression to be expanded takes place in *PACKAGE*, which can be set to reflect a particular environment with WITH-ENV.
+"
   (iter (for c = (read-char input nil 'eof))
 	(until (eq c 'eof))
 	(cond
 	  ((char= c *delimiter-escape*)
 	   (escape-chars input output))
 	  ((char= c *template-delimiter*)
-	   (expand-template input output recursive-expansion))
-	  (t (write-char c output)))))v
+	   (expand-template input output))
+	  (t (write-char c output)))))
 
-(defun expand-string-to-string (input &key (recursive-expansion nil))
+(defun expand-string-to-string (input)
   "String -> String
 Like EXPAND, but inputs and outputs strings."
   (with-input-from-string (in input)
     (with-output-to-string (out)
-      (expand in :output out
-	      :recursive-expansion recursive-expansion))))
+      (expand in :output out))))
 
 ;;;; ### Private
 (defun escape-chars (input output)
@@ -75,7 +79,7 @@ Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* c
     (iter (for c in (reverse out))
 	  (write-char c output))))
 
-(defun expand-template (input output recursive-expansion)
+(defun expand-template (input output)
   "Stream Stream -> Boolean
 The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into OUTPUT if such template exists. Return true if an expansion was made.
 
@@ -110,31 +114,27 @@ If the following character in INPUT is anything else, it may be the start of a v
 	       (digit-char-p peek))
 	   (backtrack))
 	  ((char= peek #\()
-	   (expand-expression (read input) output recursive-expansion))
-	  (t (expand-expression (expand-variable-or-backtrack) output recursive-expansion)))))
+	   (expand-expression (read input) output))
+	  (t (expand-expression (expand-variable-or-backtrack) output)))))
 
-(defun expand-expression (expr output recursive-expansion)
+(defun expand-expression (expr output)
   "expr Stream -> nil
-Print the evaluationof the expression EXPR, aesthetically, to OUTPUT. If EXPR evaluates to a list it is assumed to be a list of strings, which will be concatenated."
+Print the evaluationof the expression EXPR, aesthetically, to OUTPUT. If EXPR evaluates to a list it is assumed to be a list of strings, which will be concatenated.
+
+All top level expansions should be marked up as appropriate, except for INCLUDE statements."
   (let+ ((e (eval expr))
+	 (include? (and (listp expr) (equal (first expr) 'include)))
 	 (expanded-string (format nil "~a" (if (listp e)
 					       (concatenate 'string (flatten e))
-					       e))))
-    (if recursive-expansion
-	(with-open-stream (s (make-string-input-stream expanded-string))
-	  (expand s :output output :recursive-expansion t))
-	(princ expanded-string output))))
-
-;;;; ### Util
-(defun times (n elt)
-  "Natural X -> (X)
-Return a list of n ELTs."
-  (iter (for x from 0 below n)
-	(collect elt)))
-
-(defun whitespace-char-p (char)
-  "Character -> Boolean
-Return true if CHAR is a whitespace character."
-  (if (find char '(#\Space #\Newline #\Tab) :test #'char=)
-      t))
-
+					       e)))
+	 (recursive-expansion (let ((*toplevel-expansion* include?))
+				(expand-string-to-string expanded-string))))
+    (with-input-from-string
+	(in (if (and *toplevel-expansion*
+		     (symbolp expr)
+		     (not include?))
+		(let+ ((key (string->keyword (symbol-name expr)))
+		       ((&values data type args) (get-data key)))
+		  (apply #'process-content recursive-expansion args))
+		recursive-expansion))
+      (copy-stream in output))))

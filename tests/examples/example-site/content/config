@@ -1,0 +1,31 @@
+:site-name
+site-generator
+
+:languages
+en fr
+
+:template
+main.html
+
+:nav lang=en 
+* [Home]($(page-address "index"))
+* [About site-generator]($(page-address "about"))
+
+:nav lang=fr
+* [Accueil]($(page-address "index"))
+* [À propos de site-generator]($(page-address "about"))
+
+:footer-text lang=en
+This is the end of the page$(when (bound? title)
+                             (echo " " (process-content
+			                 (echo "\"" title
+			                       "\" (these should be curly quotes)")
+			                 :output-format :markdown
+					 :markup :markdown))). 
+
+:footer-text lang=fr
+Ceci est la fin de la page$(when (bound? title) (echo " \"" title "\"")).
+
+:default
+:nav markup=markdown
+:content markup=markdown

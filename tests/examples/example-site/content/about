@@ -7,7 +7,10 @@ About site-generator
 :title lang=fr
 À propos de site-generator
 
-:content lang=en markup=raw
+:slug lang=fr
+A_propos
+
+:content lang=en markup=none
 <p>This is *another* (the asterisks are deliberate) page that uses a different template.</p>
 
 :content lang=fr

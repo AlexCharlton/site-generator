@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>$title$ — $site-name$</title>
+<title>$(when (bound? title) (echo title " — ")) $site-name$</title>
 </head>
 
 <body>
