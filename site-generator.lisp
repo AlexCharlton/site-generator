@@ -398,9 +398,9 @@ Concatenate the strings"
 
 (defmacro bound? (symbol)
   "Symbol -> Boolean
-Return true if the SYMBOL is bound, silencing UNBOUND-VARIABLE errors."
-  (handler-case (boundp symbol)
-    (unbound-variable () nil)))
+Return value of SYMBOL if bound, silencing UNBOUND-VARIABLE errors."
+  `(handler-case (symbol-value ,symbol)
+     (unbound-variable () nil)))
 
 (defmacro def-page-accessor (name entry-accessor value-var
 			     (path lang &rest more-keys) &body body)
