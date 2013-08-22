@@ -1,4 +1,6 @@
 (in-package :site-generator)
+(eval-when (:execute :load-toplevel :compile-toplevel)
+  (com.dvlsoft.clon:nickname-package))
 ;;;; # Site Generator
 (export
  '(generate-site
@@ -7,8 +9,9 @@
    echo
    bound?))
 
-;;;; ## Primary interface
+(defvar *version* "0.1.0")
 
+;;;; ## Primary interface
 (defvar *root-dir*)
 (defvar *content-dir*)
 (defvar *site-dir*)
@@ -37,14 +40,14 @@
   "String &rest Things -> nil
 Used to print an informative message regarding the status of site generation, respecting the variable *QUIET*."
   (unless *quiet*
-    (apply #'format t format-string args)))
+    (apply #'format t (concatenate 'string format-string "~%") args)))
 
 (defun generate-site (dir)
   "Pathname -> nil
 After WALK-SITE updates the *DB*, generate the pages for every content file that needs updating. Empty directories are cleaned when done."
   (set-root-dir dir)
-  (unless (directory-exists-p *root-dir*)
-    (error "Non-valid directory supplied: ~a" dir))
+  (check-site)
+  (print-message "Generating site...")
   (init-db)
   (walk-site *content-dir* nil nil)
   (ensure-directories-exist *site-dir*)
@@ -69,15 +72,17 @@ After WALK-SITE updates the *DB*, generate the pages for every content file that
     (iter (for config in configs)
 	(gen-site (reverse config) nil)))
   (remove-empty-directories *site-dir*)
-  (write-db))
+  (write-db)
+  (print-message "Done generating site."))
 
 (defun init-site (dir)
   "Pathspec -> nil
 Initialize the directory structure of a site.
 TODO?: Add keyword arguments to be inserted into config file"
   (set-root-dir dir)
+  (print-message "Initializing site-generator site at ~a" dir)
   (ensure-directories-exist *root-dir*)
-  (iter (for dir in '(*content-dir* *template-dir* *static-dir*))
+  (iter (for dir in (list *content-dir* *template-dir* *static-dir*))
 	(ensure-directories-exist dir))
   (touch-file (merge-pathnames "config" *content-dir*))
   (touch-file (merge-pathnames "index" *content-dir*)))
@@ -91,6 +96,15 @@ Set the root directory of the site, and all corresponding directories."
 	*site-dir* (merge-pathnames "site/" *root-dir*)
 	*template-dir* (merge-pathnames "templates/" *root-dir*)
 	*static-dir* (merge-pathnames "static/" *root-dir*)))
+
+(defun check-site ()
+  (unless (and (directory-exists-p *root-dir*)
+	       (directory-exists-p *content-dir*)
+	       (directory-exists-p *static-dir*)
+	       (directory-exists-p *template-dir*)
+	       (file-exists-p (merge-pathnames "config" *content-dir*))
+	       (file-exists-p (merge-pathnames "index" *content-dir*)))
+    (error "Not a site-generator directory: ~a" *root-dir*)))
 
 (defun walk-site (dir configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
@@ -169,7 +183,7 @@ After deleting the old pages in the entry, parse the file and for each language,
 For the file PAGE, write the expansion of the current template with the current environment found in *ENVIRONMENT*."
   (unless (getf *environment* :template)
     (error "Template not specified for page: ~a" page))
-  (print-message "Writing page ~a~%" (directory-minus page *site-dir*))
+  (print-message "Writing page ~a" (directory-minus page *site-dir*))
   (ensure-directories-exist page)
   (with-open-file (out page
 		       :direction :output
@@ -308,6 +322,78 @@ Parse a page content file using PARSE-CONTENT and throw errors if any settings a
 		   key page-file)))
     env))
 
+;;;; ## Site publishing
+(defun publish-site (dir)
+  (print-message "Publishing ~a" dir)
+  (generate-site dir))
+
+;;;; ## Test server
+(defun run-test-server (dir &optional (port 4242))
+  "Pathname &optional Integer -> nil"
+  (print-message "Test server can be accessed through http://127.0.0.1:~a/" port)
+  (watch-site dir))
+
+(defun watch-site (dir)
+  "Pathname -> nil
+TODO check for interupts?")
+
+;;;; ## Command line interface
+(clon:defsynopsis (:postfix "DIRECTORY")
+  (text :contents "site-generator is a static site generator. When called with no arguments, site-generator will generate the site-generator site that resides at DIRECTORY.")
+  (flag :short-name "i" :long-name "init"
+	:description "Initialize a site-generator directory.")
+  (flag :short-name "p" :long-name "publish"
+	:description "Generate the site and publish it to the server specified in the top-level config file.")
+  (lispobj :short-name "s" :long-name "test-server"
+	   :argument-type :optional
+	   :description "Lanch a test server for a site-generator site, updating the pages when files are changed on disk. Optionally accepts a value for the port on which the server listens."
+	   :fallback-value 4242
+	   :argument-name "PORT")
+  (flag :short-name "q" :long-name "quiet"
+	:description "Silence output.")
+  (flag :short-name "h" :long-name "help"
+	:description "Print this help and exit.")
+  (flag :short-name "v" :long-name "version"
+	:description "Print version number and exit."))
+
+(defun main (argv)
+  "String -> nil
+Entry point. Perform the relevant action based on the command line options."
+  (declare (ignore argv))
+  (in-package :site-generator)
+  (handler-case
+      (progn (clon:make-context)
+	     (when (clon:getopt :short-name "q")
+	       (setf *quiet* t))
+	     (let ((dir (get-site-dir)))
+	       (cond
+		 ((clon:getopt :short-name "h")
+		  (clon:help)
+		  (sb-ext:quit))
+		 ((clon:getopt :short-name "v")
+		  (format t "site-generator version ~a~%" *version*)
+		  (sb-ext:quit))
+		 ((clon:getopt :short-name "i")
+		  (init-site dir)
+		  (sb-ext:quit))
+		 ((clon:getopt :short-name "p")
+		  (publish-site dir)
+		  (sb-ext:quit)))
+	       (if-let ((port (clon:getopt :short-name "s")))
+		 (run-test-server dir port) 
+		 (generate-site dir))))
+    (error (e) (format t "Error: ~a~%" e))))
+
+(defun get-site-dir ()
+  "nil -> Pathname
+Return the path refereed to by the remainder of the command line options. If no path is specified, default to *DEFAULT-PATHNAME-DEFAULTS*."
+  (if-let ((remainder (clon:remainder)))
+    (canonical-pathname
+     (let ((dir (first remainder)))
+       (if (pathname-root-p dir)
+	dir
+	(merge-pathnames dir))))
+    *default-pathname-defaults*))
 
 ;;;; ## Accessors
 ;;;; Accessors is the loose term for the functions that are called from templates in order to access information about the pages of a site.

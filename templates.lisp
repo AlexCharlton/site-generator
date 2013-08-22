@@ -16,7 +16,7 @@
 (defvar *toplevel-expansion* t)
 
 (defmacro with-env (&body body)
-  "Evaluate the BODY in a new anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
+  "Evaluate the BODY in a semi anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
   `(let ((*package* (defpackage ,(gensym "environment")
 		      ,(cons :use (getf *environment* :use)))))
      (iter (for (var val) on *environment* by #'cddr)
