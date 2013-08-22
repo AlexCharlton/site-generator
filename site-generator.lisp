@@ -322,21 +322,6 @@ Parse a page content file using PARSE-CONTENT and throw errors if any settings a
 		   key page-file)))
     env))
 
-;;;; ## Site publishing
-(defun publish-site (dir)
-  (print-message "Publishing ~a" dir)
-  (generate-site dir))
-
-;;;; ## Test server
-(defun run-test-server (dir &optional (port 4242))
-  "Pathname &optional Integer -> nil"
-  (print-message "Test server can be accessed through http://127.0.0.1:~a/" port)
-  (watch-site dir))
-
-(defun watch-site (dir)
-  "Pathname -> nil
-TODO check for interupts?")
-
 ;;;; ## Command line interface
 (clon:defsynopsis (:postfix "DIRECTORY")
   (text :contents "site-generator is a static site generator. When called with no arguments, site-generator will generate the site-generator site that resides at DIRECTORY.")
