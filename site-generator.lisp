@@ -7,7 +7,8 @@
    init-site
    include
    echo
-   bound?))
+   bound?
+   other-languages))
 
 (defvar *version* "0.1.0")
 
@@ -222,7 +223,8 @@ After deleting the old pages in the entry, parse the file and for each language,
 			 (parse-page (merge-pathnames file *content-dir*))
 			 *environment*)))
     (iter (for lang in (getf *environment* :languages))
-	  (let ((*environment* (merge-environments (list :lang lang)
+	  (let ((*environment* (merge-environments (list :lang lang
+							 :current-file (namestring file))
 						   *environment*)))
 	    (write-page (merge-pathnames (getf (content-entry-pages entry) lang)
 					 *site-dir*))))
@@ -378,7 +380,7 @@ Print the contents of *DB* into *DB-FILE*, as a Plist."
 Parse a config file using PARSE-CONTENT, throwing errors if any settings are used that shouldn't be."
   (let+ ((env (if (file-exists-p config-file)
 		  (parse-content config-file))))
-    (iter (for key in '(:slug :lang))
+    (iter (for key in '(:slug :lang :current-file))
 	  (when (getf env key)
 	    (error "~s definition not allowed in a config file, found in ~a"
 		   key config-file)))
@@ -394,7 +396,8 @@ Parse a config file using PARSE-CONTENT, throwing errors if any settings are use
   "Pathspec -> Plist
 Parse a page content file using PARSE-CONTENT and throw errors if any settings are used that shouldn't be."
   (let ((env (parse-content page-file)))
-    (iter (for key in (append '(:directory-slug :lang) *top-level-config-vars*))
+    (iter (for key in (append '(:directory-slug :lang :current-file)
+			      *top-level-config-vars*))
 	  (when (getf env key)
 	    (error "~s definition not allowed in a page content file, found in ~a"
 		   key page-file)))
@@ -523,3 +526,15 @@ TODO: Create formatted string of links."
 (def-page-accessor page-author content-entry-author author (path lang)
   "String &keys (lang Keyword) -> String"
   author)
+
+(defun other-languages (&key (ul-class "languages") (selected-class "current-langage"))
+  "String &key (ul-class String) (selected-class String) -> String
+Return an html list of links to the current page in all languagse"
+  (let ((page (get-data :current-file)))
+    (with-html-output-to-string (s)
+      (:ul :class ul-class
+	   (loop for lang in (get-data :languages)
+	      do (if (eq lang (get-data :lang))
+		     (htm (:li :class selected-class (fmt "~a" lang)))
+		     (htm (:li (:a :href (page-address page :lang lang)
+				   (fmt "~a" lang))))))))))

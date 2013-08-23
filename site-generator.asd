@@ -5,7 +5,7 @@
   :description "Describe site-generator here"
   :author "Alex Charlton <alex.n.charlton@gmail.com>"
   :license "BSD-2"
-  :depends-on (:let-plus :alexandria :iterate :hunchentoot :com.dvlsoft.clon :inferior-shell :cl-ppcre :cl-fad :bordeaux-threads :osicat)
+  :depends-on (:let-plus :alexandria :iterate :hunchentoot :com.dvlsoft.clon :inferior-shell :cl-ppcre :cl-fad :bordeaux-threads :osicat :cl-who)
   :components ((:file "package")
 	       (:file "utility")
 	       (:file "content")
