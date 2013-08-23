@@ -120,4 +120,15 @@
 	       (sg::get-pages "foo" '(:en "foo" :fr "fr/bar" :gr "gr/quox"))))
     (is (equal '(:en "index.html" :fr "fr/index.html" :gr "gr/index.html")
 	       (sg::get-pages "index"
-			      '(:en "index" :fr "fr/index" :gr "gr/index"))))))
+			      '(:en "index" :fr "fr/index" :gr "gr/index")))))
+  (is (equal '(((#P"footer.html" . 3585328073) (#P"other.html" . 3585327838))
+		((#P"header.html" . 3586212646))
+		((#P"main.html" . 3585328208) (#P"footer.html" . 3585328073)
+		 (#P"other.html" . 3585327838)(#P"header.html" . 3586212646))
+		((#P"other.html" . 3585327838)))
+	     (sg::resolve-template-dependancies
+	      '(((#P"footer.html" . 3585328073) (#P"other.html" . 3585327838))
+		((#P"header.html" . 3586212646))
+		((#P"main.html" . 3585328208) (#P"footer.html" . 3585328073)
+		 (#P"header.html" . 3586212646))
+		((#P"other.html" . 3585327838)))))))

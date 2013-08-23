@@ -22,4 +22,3 @@ Tests can be run with `(asdf:test-system :site-generator)`.
 ## Using site-generator
 
 ## Known bugs
-- INCLUDEd templates do not trigger updates when changed.

@@ -31,6 +31,11 @@ Return the name of the directory that contains PATH."
 	path
 	(last-elt (split "/" path)))))
 
+(defun hidden-p (path)
+  "Pathspec -> Boolean
+Return true if the path represents a hidden file."
+  (scan "^\\." (pathname-name path)))
+
 ;;;; ### Strings and characters
 (defun words (string)
   "String -> (String)

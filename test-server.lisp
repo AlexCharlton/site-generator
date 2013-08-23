@@ -22,7 +22,7 @@
   "nil -> nil"
   (print-message "Watching site for changes...")
   (iter (until *quit*)
-	(walk-site *content-dir* nil nil)
+	(update-db)
 	(when-let ((needs-update (needs-update)))
 	  (update-site needs-update))
 	(sleep 1)))

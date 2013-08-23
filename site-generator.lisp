@@ -44,12 +44,12 @@ Used to print an informative message regarding the status of site generation, re
 
 (defun generate-site (dir)
   "Pathname -> nil
-After WALK-SITE updates the *DB*, generate the pages for every content file that needs updating."
+After updating the database, generate the pages for every content file that needs updating."
   (set-root-dir dir)
   (check-site)
   (print-message "Generating site...")
   (init-db)
-  (walk-site *content-dir* nil nil)
+  (update-db)
   (update-site (needs-update))
   (print-message "Done generating site."))
 
@@ -85,9 +85,13 @@ Determine if a *ROOT-DIR* is a site-generator directory."
 	       (file-exists-p (merge-pathnames "config" *content-dir*)))
     (error "Not a site-generator directory: ~a" *root-dir*)))
 
+(defun update-db ()
+  (setf (gethash :templates *db*) (walk-templates))
+  (walk-site *content-dir* nil nil))
+
 (defun walk-site (dir configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
-Recursively walk a site, tracking and parsing configs, working out slugs and calling UPDATE-DB on all non config files."
+Recursively walk a site, tracking and parsing configs, working out slugs and calling UPDATE-ENTRY on all non config files."
   (let* ((config (merge-pathnames "config" dir))
 	 (config-contents (when (file-exists-p config)
 			    (push (cons (directory-minus config *content-dir*)
@@ -97,11 +101,48 @@ Recursively walk a site, tracking and parsing configs, working out slugs and cal
 	 (*environment* (merge-environments config-contents *environment*))
 	 (dir-slugs (add-slugs (get-dir-slugs config config-contents) dir-slugs)))
     (iter (for file in (list-directory dir))
-	  (if (directory-pathname-p file)
-	      (walk-site file configs dir-slugs)
-	      (unless (equal (pathname-name file)
-			     "config")
-		(update-db file configs dir-slugs))))))
+	  (unless (hidden-p file)
+	    (if (directory-pathname-p file)
+		       (walk-site file configs dir-slugs)
+		       (unless (equal (pathname-name file)
+				      "config")
+			 (update-entry file configs dir-slugs)))))))
+
+(defun walk-templates ()
+  "nil -> ({(Pathname . Integer)}+)
+Return the list of template pathnames consed to the templates they depend on where a dependancy is a (path . file-write-date) pair."
+  (let+ (templates
+	 ((&flet get-depends (path)
+	    (push (cons (cons (directory-minus path *template-dir*)
+			      (file-write-date path)) nil) templates)
+	    (with-open-file (s path)
+	      (iter (for line = (read-line s nil 'eof))
+		    (until (eq line 'eof))
+		    (register-groups-bind (template)
+			("\\$\\(\\s*include\\s+\"(.*)\"\\s*\\)" line :sharedp t)
+		      (push (cons (pathname template)
+				  (file-write-date (merge-pathnames template
+								    *template-dir*)))
+			    (cdr (first templates)))))))))
+    (walk-directory *template-dir* #'get-depends :test (lambda (x) (not (hidden-p x))))
+    (resolve-template-dependancies (reverse templates))))
+
+(defun resolve-template-dependancies (templates)
+  "({(Pathname . Integer)}+) -> ({(Pathname . Integer)}+)
+Given a list of templates an their direct dependancies, return the list of templates with all dependancies."
+  (let+ (((&labels resolve-template (ts)
+	    (when ts
+	      (cons (first ts)
+		    (append (resolve-template (rest (get-template (first (first ts))
+								  templates)))
+			    (resolve-template (rest ts))))))))
+    (iter (for template in templates)
+	  (collect (cons (first template) (resolve-template (rest template)))))))
+
+(defun get-template (path templates)
+  "Pathspec ({(Pathname . Integer)}+) -> {(Pathname . Integer)}+
+"
+  (find (pathname path) templates :key #'caar :test #'equal))
 
 (defun update-site (needs-update)
   "((Pathname Entry (Pathname))) -> nil
@@ -132,43 +173,45 @@ Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDA
     (remove-empty-directories *site-dir*)
     (write-db)))
 
-(defun update-db (file configs dir-slugs)
+(defun update-entry (file configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
 Update the *DB* ENTRY of FILE when the given content file is new or has been updated, one if the file's configs have been updated, or when the file's template has been updated."
-  (let* ((content (parse-page file))
+  (let* ((*environment* (merge-environments (parse-page file)
+					    *environment*))
 	 (relative-path (directory-minus file *content-dir*))
 	 (entry (gethash relative-path *db*))
-	 (template (cons (get-data :template)
-			 (file-write-date (merge-pathnames (get-data :template)
-							   *template-dir*)))))
+	 (template (get-template (get-data :template)
+				 (gethash :templates *db*))))
     (when (or (not entry)
 	      (> (file-write-date file) (content-entry-last-modified entry))
 	      (not (equal configs (content-entry-configs entry)))
 	      (not (equal template (content-entry-template entry))))
-	(setf (gethash relative-path *db*)
-	      (make-content-entry
-	       :needs-update t
-	       :last-modified (file-write-date file)
-	       :date (if entry
-			 (if-let ((date (getf content :date)))
-			     date
-			     (content-entry-date entry))
-			 (file-write-date file))
-	       :tags (split-comma-or-space-separated (getf content :tags))
-	       :author (getf content :author)
-	       :title (getf content :title)
-	       :template template
-	       :configs configs
-	       :pages (get-pages file (add-slugs (get-file-slugs file content)
-						dir-slugs))
-	       :old-pages (when entry
-			    (content-entry-old-pages entry)))))))
+      (setf (gethash relative-path *db*)
+	    (make-content-entry
+	     :needs-update t
+	     :last-modified (file-write-date file)
+	     :date (if-let ((date (get-data :date)))
+		     date 
+		     (if entry
+			 (content-entry-date entry)
+			 (file-write-date file)))
+	     :tags (iter (for (lang tags) on (getf *environment* :tags) by #'cddr)
+			 (collect lang)
+			 (collect (split-comma-or-space-separated )))
+	     :author (getf *environment* :author)
+	     :title (getf *environment* :title)
+	     :template template
+	     :configs configs
+	     :pages (get-pages file (add-slugs (get-file-slugs file) dir-slugs))
+	     :old-pages (when entry
+			  (content-entry-old-pages entry)))))))
 
 (defun needs-update ()
   "nil -> ((Pathname Entry (Pathname)))
 Return a list of all the (file entry (configs)) pairs from the *DB* that need updating."
   (iter (for (path entry) in-hashtable *db*)
-	(when (content-entry-needs-update entry)
+	(when (and (eq (type-of entry) 'content-entry)
+		   (content-entry-needs-update entry))
 	  (collect (list path entry (mapcar #'first (content-entry-configs entry)))))))
 
 (defun generate-page (file entry)
@@ -206,8 +249,9 @@ For the file PAGE, write the expansion of the current template with the current 
 (defun delete-old-pages (entry)
   "Entry -> nil
 Delete the files in the list of old pages contained in ENTRY."
-  (iter (for file in (content-entry-old-pages entry))
-	(delete-file (merge-pathnames file *site-dir*))))
+  (iter (for (lang file) on (content-entry-old-pages entry) by #'cddr)
+	(when-let ((file (file-exists-p file)))
+	  (delete-file (merge-pathnames file *site-dir*)))))
 
 (defun remove-empty-directories (dir)
   "Pathname -> nil
@@ -219,14 +263,14 @@ Recurs depth first through a directory tree, deleting all directories that do no
     (print-message "Removing unused directory: ~a" (directory-minus dir *site-dir*))
     (delete-directory-and-files dir)))
 
-(defun get-file-slugs (content-file content)
-  "Pathname Plist -> Plist
+(defun get-file-slugs (content-file)
+  "Pathname -> Plist
 Return a Plist of appropriate file slugs, one for each language. The :SLUG property is given precedence for the slug name, after which :TITLE is used, and the name of the file is the fallback."
   (let ((name (pathname-name content-file)))
     (iter (for lang in (get-data :languages))
 	  (collect lang)
-	  (let ((slug (get-data :slug lang content))
-		(title (get-data :title lang content)))
+	  (let ((slug (get-data :slug lang))
+		(title (get-data :title lang)))
 	    (collect (slugify (cond
 				((and slug (string/= slug ""))
 				 slug)
