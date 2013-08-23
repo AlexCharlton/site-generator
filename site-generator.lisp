@@ -44,35 +44,13 @@ Used to print an informative message regarding the status of site generation, re
 
 (defun generate-site (dir)
   "Pathname -> nil
-After WALK-SITE updates the *DB*, generate the pages for every content file that needs updating. Empty directories are cleaned when done."
+After WALK-SITE updates the *DB*, generate the pages for every content file that needs updating."
   (set-root-dir dir)
   (check-site)
   (print-message "Generating site...")
   (init-db)
   (walk-site *content-dir* nil nil)
-  (ensure-directories-exist *site-dir*)
-  (let+ ((needs-update (needs-update))
-	 (configs (remove-duplicates (mapcar #'third needs-update)
-				     :test #'equal))
-	 ((&labels gen-site (configs configs-parsed)
-	    "Recursively work through each config files in CONFIGS, applying that config to *ENVIRONMENT* and generating any page in NEEDS-UPDATE that matches the configs parsed so far. NEEDS-UPDATE is updated to reflect the files that still need updating."
-	    (let ((*environment* (merge-environments
-				  (parse-config (merge-pathnames (first configs)
-								 *content-dir*))
-				  *environment*)))
-	      (push (first configs) configs-parsed)
-	      (setf needs-update
-		    (iter (for update in needs-update)
-			  (let+ (((path entry confs) update))
-			    (if (equal confs configs-parsed)
-				(generate-page path entry)
-				(collect update)))))
-	      (when (rest configs)
-		(gen-site (rest configs) configs-parsed))))))
-    (iter (for config in configs)
-	(gen-site (reverse config) nil)))
-  (remove-empty-directories *site-dir*)
-  (write-db)
+  (update-site (needs-update))
   (print-message "Done generating site."))
 
 (defun init-site (dir)
@@ -98,12 +76,13 @@ Set the root directory of the site, and all corresponding directories."
 	*static-dir* (merge-pathnames "static/" *root-dir*)))
 
 (defun check-site ()
+  "nil -> nil
+Determine if a *ROOT-DIR* is a site-generator directory."
   (unless (and (directory-exists-p *root-dir*)
 	       (directory-exists-p *content-dir*)
 	       (directory-exists-p *static-dir*)
 	       (directory-exists-p *template-dir*)
-	       (file-exists-p (merge-pathnames "config" *content-dir*))
-	       (file-exists-p (merge-pathnames "index" *content-dir*)))
+	       (file-exists-p (merge-pathnames "config" *content-dir*)))
     (error "Not a site-generator directory: ~a" *root-dir*)))
 
 (defun walk-site (dir configs dir-slugs)
@@ -123,6 +102,35 @@ Recursively walk a site, tracking and parsing configs, working out slugs and cal
 	      (unless (equal (pathname-name file)
 			     "config")
 		(update-db file configs dir-slugs))))))
+
+(defun update-site (needs-update)
+  "((Pathname Entry (Pathname))) -> nil
+Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDATE), removing empty directories when done."
+  (let+ ((configs (remove-duplicates (mapcar #'third needs-update)
+				     :test #'equal))
+	 ((&labels gen-site (configs configs-parsed)
+	    "Recursively work through each config files in CONFIGS, applying that config to *ENVIRONMENT* and generating any page in NEEDS-UPDATE that matches the configs parsed so far. NEEDS-UPDATE is updated to reflect the files that still need updating."
+	    (let ((*environment* (merge-environments
+				  (parse-config (merge-pathnames (first configs)
+								 *content-dir*))
+				  *environment*)))
+	      (push (first configs) configs-parsed)
+	      (setf needs-update
+		    (iter (for update in needs-update)
+			  (let+ (((path entry confs) update))
+			    (if (equal confs configs-parsed)
+				(generate-page path entry)
+				(collect update)))))
+	      (when (rest configs)
+		(gen-site (rest configs) configs-parsed))))))
+    (ensure-directories-exist *site-dir*)
+    (unless (directory-exists-p (merge-pathnames "static/" *site-dir*))
+      (osicat:make-link (merge-pathnames "static" *site-dir*)
+			:target *static-dir*))
+    (iter (for config in configs)
+	  (gen-site (reverse config) nil))
+    (remove-empty-directories *site-dir*)
+    (write-db)))
 
 (defun update-db (file configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
@@ -399,7 +407,7 @@ Concatenate the strings"
 (defmacro bound? (symbol)
   "Symbol -> Boolean
 Return value of SYMBOL if bound, silencing UNBOUND-VARIABLE errors."
-  `(handler-case (symbol-value ,symbol)
+  `(handler-case (symbol-value ',symbol)
      (unbound-variable () nil)))
 
 (defmacro def-page-accessor (name entry-accessor value-var

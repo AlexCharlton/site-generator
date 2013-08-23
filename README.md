@@ -17,5 +17,9 @@ Tests can be run with `(asdf:test-system :site-generator)`.
 - RSS feeds
 - Automated Javascript and CSS compilation
 - Create new content just through the command line???
+- Expand lisp html templates (CL-WHO)???
 
 ## Using site-generator
+
+## Known bugs
+- INCLUDEd templates do not trigger updates when changed.
