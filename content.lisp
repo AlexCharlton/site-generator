@@ -124,7 +124,7 @@ Merge two :DEFAULT plists."
 Return a plist of the Name-Data pairs from FILE."
   (let (ret)
     (iter (for (var args content) on (parse-content-file file) by #'cdddr)
-	  (let ((content (trim-whitespace content)))
+	  (let ((content (trim content)))
 	    (when (string= content "")
 	      (error "Variable ~a does not have any content in file ~a"
 		     var file))
@@ -197,7 +197,7 @@ Break a string by spaces and equals signs and return a list of the resulting str
 (defun generate-pandoc-args (args)
   "(Plist) -> String
 Turn a Plist of arguments and *ENVIRONMENT* into a string understood by pandoc. *PANDOC-SUPPORTED-ARGS* is used for this mapping."
-  (join-string-list
+  (apply #'join-strings
    (iter (for (supported-arg fn) on *pandoc-supported-args* by #'cddr)
 	 (if-let ((val (or (getf args supported-arg)
 			   (getf *environment* supported-arg))))
@@ -205,15 +205,18 @@ Turn a Plist of arguments and *ENVIRONMENT* into a string understood by pandoc. 
 
 (defun pandoc-process (string &optional args)
   "String &optional (Plist) -> String
-Pass the given STRING and ARGS through pandoc given *ENVIRONMENT*."
+Pass the given STRING and ARGS through pandoc given *ENVIRONMENT*.
+
+Spawning a new pandoc process is slow, so this is not the prefered way of doing it."
   (with-open-temporary-file (s :direction :output)
     (iter (for char in-string string)
 	  (write-char char s))
     (file-position s 0)
-    (inferior-shell:run/ss
-     (join-string-list (list "pandoc"
-			     (generate-pandoc-args args)
-			     (namestring (pathname s)))))))
+    (trim (asdf/interface::run-program 
+	   (join-strings "pandoc"
+			 (generate-pandoc-args args)
+			 (namestring (pathname s)))
+	   :output :string))))
 
 (defun process-content (content &rest args)
   "String &rest (Key Value) -> String

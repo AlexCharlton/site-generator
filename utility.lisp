@@ -51,12 +51,12 @@ Split a string by newlines."
   "String -> String"
   (first (lines string)))
 
-(defun join-string-list (string-list)
+(defun join-strings (&rest strings)
     " (String) -> String
 Concatenates a list of strings and puts spaces between the elements. (from Common Lisp Cookbook)"
-    (format nil "~{~a~^ ~}" (remove nil string-list)))
+    (format nil "~{~a~^ ~}" (remove nil strings)))
 
-(defun trim-whitespace (string)
+(defun trim (string)
   "String -> String
 Remove whitespace at the beginning and end of a string."
   (string-trim '(#\Space #\Newline #\Tab) string))
