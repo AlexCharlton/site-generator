@@ -241,7 +241,7 @@ For the file PAGE, write the expansion of the current template with the current 
   (with-open-file (out page
 		       :direction :output
 		       :if-does-not-exist :create
-		       :if-exists :overwrite)
+		       :if-exists :supersede)
     (with-open-file (in (merge-pathnames (getf *environment* :template)
 					 *template-dir*)
 			:direction :input)
@@ -252,7 +252,7 @@ For the file PAGE, write the expansion of the current template with the current 
   "Entry -> nil
 Delete the files in the list of old pages contained in ENTRY."
   (iter (for (lang file) on (content-entry-old-pages entry) by #'cddr)
-	(when-let ((file (file-exists-p file)))
+	(when-let ((file (file-exists-p (merge-pathnames file *site-dir*))))
 	  (delete-file (merge-pathnames file *site-dir*)))))
 
 (defun remove-empty-directories (dir)
