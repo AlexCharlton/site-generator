@@ -1,6 +1,9 @@
 :site-name
 site-generator
 
+:server
+alexcharlton@alex-charlton.com:alex-charlton.com/
+
 :languages
 en fr
 

@@ -372,7 +372,7 @@ Print the contents of *DB* into *DB-FILE*, as a Plist."
     (prin1 (hash-table-plist *db*) s)))
 
 (defvar *top-level-config-vars*
-    '(:languages :default-language :use :pages-as-directories)
+    '(:languages :default-language :use :pages-as-directories :server)
   "Variables that may only be defined in the top-level config file.")
 
 (defun parse-config (config-file)

@@ -56,6 +56,7 @@
 			    (let+ (((var &rest args) (is-variable? line)))
 			      (list var args)))
 			  (lines x)))
+    :server ,#'first-line
     :slug nil
     :directory-slug nil
     :lang t
