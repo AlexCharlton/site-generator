@@ -69,12 +69,17 @@
 	 :NAV
 	 (:FR
 	  ("* [Accueil]($(page-address \"index\"))
-* [À propos de site-generator]($(page-address \"about\"))")
+* [À propos de site-generator]($(page-address \"about\"))
+* [Foo]($(page-address \"foo/bar\"))")
 	  :EN
 	  ("* [Home]($(page-address \"index\"))
-* [About site-generator]($(page-address \"about\"))"))
-	 :TEMPLATE "main.html" :LANGUAGES (:EN :FR) :SITE-NAME (:EN ("site-generator")))
-       (parse-content (merge-pathnames "examples/example-site/content/config" *test-dir*))))
+* [About site-generator]($(page-address \"about\"))
+* [Foo]($(page-address \"foo/bar\"))"))
+	 :TEMPLATE "main.html" :LANGUAGES (:EN :FR) :SERVER
+	 (:EN ("alexcharlton@alex-charlton.com:alex-charlton.com/")) :SITE-NAME
+	 (:EN ("site-generator")))
+       (parse-content (merge-pathnames "../examples/example-site/content/config"
+				       *test-dir*))))
   (signals simple-error
     (parse-content (merge-pathnames "bad-content1" *test-dir*)))
   (signals simple-error
@@ -112,10 +117,11 @@
 	     (sg::get-dir-slugs "config" '(:languages (:en :fr)
 					   :default-language :en))))
   (let ((*environment* '(:languages (:en :fr :gr)
-			 :pages-as-directories t)))
+			 :pages-as-directories t
+			 :title (:en ("Hello there"))
+			 :slug (:fr ("foo")))))
     (is (equal '(:en "Hello_there" :fr "foo" :gr "hello")
-	 (sg::get-file-slugs "hello" '(:title (:en ("Hello there"))
-				       :slug (:fr ("foo"))))))
+	 (sg::get-file-slugs "hello")))
     (is (equal '(:en "foo/index.html" :fr "fr/bar/index.html" :gr "gr/quox/index.html")
 	       (sg::get-pages "foo" '(:en "foo" :fr "fr/bar" :gr "gr/quox"))))
     (is (equal '(:en "index.html" :fr "fr/index.html" :gr "gr/index.html")

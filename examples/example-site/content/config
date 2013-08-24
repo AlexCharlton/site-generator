@@ -13,10 +13,12 @@ main.html
 :nav lang=en 
 * [Home]($(page-address "index"))
 * [About site-generator]($(page-address "about"))
+* [Foo]($(page-address "foo/bar"))
 
 :nav lang=fr
 * [Accueil]($(page-address "index"))
 * [À propos de site-generator]($(page-address "about"))
+* [Foo]($(page-address "foo/bar"))
 
 :footer-text lang=en
 This is the end of the page$(when (bound? title)
