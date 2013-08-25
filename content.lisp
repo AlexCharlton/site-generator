@@ -1,4 +1,5 @@
-(in-package :site-generator);;;; ## Site content
+(in-package :site-generator)
+;;;; ## Site content
 ;;;; The site's content (and configuration) is parsed from text files (a.k.a. content files). Lines beginning with a keyword denote a variable, and the next lines before the next keyword are the content of that variable. Additionally, keywords may have further key-value pairs, strings separated by equals (e.g. foo=bar), after them.
 
 ;;;; While the syntax is the same, there are really two sorts of variables that are stored in content files, content and configuration. The combination of the two will be referred to, regrettably, as "data".
@@ -17,6 +18,7 @@
 (export
  '(parse-content
    markup
+   with-env
    *environment*
    get-data))
 
@@ -119,6 +121,38 @@ Merge two :DEFAULT plists."
 	  (setf (getf base k)
 		(merge-plists v (getf base k))))
     base))
+
+;;;; ## Evaluation environment
+(defmacro with-env (&body body)
+  "Evaluate the BODY in a semi anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
+  `(let ((*package* (defpackage ,(gensym "environment")
+		      ,(cons :use (getf *environment* :use)))))
+     (handler-bind ((warning #'muffle-warning))
+       (set-up-content-environment)
+       (set-up-cl-environment)
+       ,@body
+       (delete-package *package*))))
+
+(defun set-up-content-environment ()
+  "For each peice of content in *environment* (see DESTRUCTURE-DATA), set the value of that symbol to the content, and set the macro-function of that symbol to a call to markup and recursively expand the content."
+  (iter (for (var val) on *environment* by #'cddr)
+	(let+ (((&values data type args) (destructure-data var val)))
+	  (when (eq type :content)
+	    (setf (symbol-value (intern (symbol-name var)))
+		  data
+		  (macro-function (intern (symbol-name var)))
+		  (lambda (call env)
+		    (declare (ignore call env))
+		    (append (list 'markup (expand-string-to-string data))
+			    args)))))))
+
+(defun set-up-cl-environment ()
+  "Evaluate each expression of the :cl-environment value of *ENVIRONMENT*."
+  (when-let ((cl-env (get-data :cl-environment)))
+    (with-input-from-string (s cl-env)
+      (iter (for expr = (read s nil 'eof))
+	    (until (eq expr 'eof))
+	    (eval expr)))))
 
 ;;;; ## Parse content files
 (defvar *variable-scanner* (create-scanner "^:(\\S+)(.*)")

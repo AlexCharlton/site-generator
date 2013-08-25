@@ -3,7 +3,6 @@
 (export
  '(*template-delimiter*
    *delimiter-escape*
-   with-env
    expand
    expand-string-to-string))
 
@@ -12,27 +11,6 @@
 
 (defvar *delimiter-escape* #\\
   "The character that indicates that a *TEMPLATE-DELIMITER* should be escaped. This will also escape other *DELIMITER-ESCAPE* characters but only when immediately preceding a *TEMPLATE-DELIMITER*.")
-
-(defvar *toplevel-expansion* t)
-
-(defmacro with-env (&body body)
-  "Evaluate the BODY in a semi anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
-  `(let ((*package* (defpackage ,(gensym "environment")
-		      ,(cons :use (getf *environment* :use)))))
-     (iter (for (var val) on *environment* by #'cddr)
-	   (let+ (((&values data type args) (destructure-data var val)))
-	     (declare (ignore args))
-	     (when (eq type :content)
-	       (setf (symbol-value (intern (symbol-name var))) data))))
-     ,@body
-     (delete-package *package*)))
-       (when-let ((cl-env (get-data :cl-environment)))
-	 (with-input-from-string (s cl-env)
-	   (iter (for expr = (read s nil 'eof))
-		 (until (eq expr 'eof))
-		 (eval expr))))
-       ,@body
-       (delete-package *package*))))
 
 (defun expand (input &key (output *standard-output*))
   "Stream (:output Stream) -> nil
@@ -126,21 +104,13 @@ If the following character in INPUT is anything else, it may be the start of a v
 
 (defun expand-expression (expr output)
   "Expr Stream -> nil
-Print the evaluation of the expression EXPR, aesthetically, to OUTPUT. If EXPR evaluates to a list it is assumed to be a list of strings, which will be concatenated. The expansions are then recusively expanded.
+Print the evaluation of the expression EXPR, aesthetically, to OUTPUT. The evaluation is recusively expanded. 
 
-All top level variable expansions should be marked up as appropriate, except for INCLUDE statements."
-  (let+ ((e (eval expr))
-	 (include? (and (listp expr) (equal (first expr) 'include)))
-	 (expanded-string (format nil "~a" (if (listp e)
-					       (concatenate 'string (flatten e))
-					       e)))
-	 (recursive-expansion (let ((*toplevel-expansion* include?))
-				(expand-string-to-string expanded-string))))
+Evaluation of symbol expressions are evaluated inside a list in order to call their macro expansion. Because of this they are not recursively expanded, because the macro expansion is assumed to do so."
     (with-input-from-string
-	(in (if (and *toplevel-expansion*
-		     (symbolp expr))
-		(let+ ((key (string->keyword (symbol-name expr)))
-		       ((&values data type args) (get-data key)))
-		  (apply #'process-content recursive-expansion args))
-		recursive-expansion))
-      (copy-stream in output))))
+	(in (if (symbolp expr)
+		(eval (list expr))
+		(if-let ((e (eval expr)))
+		  (expand-string-to-string (format nil "~a" e))
+		  "")))
+      (copy-stream in output)))
