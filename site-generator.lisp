@@ -2,7 +2,8 @@
 (eval-when (:execute :load-toplevel :compile-toplevel)
   (com.dvlsoft.clon:nickname-package)
   (enable-read-macros))
-(setf (html-mode) :html5)
+(setf (html-mode) :html5
+      *html-no-indent-tags* '(:pre :textarea :b :a :li :title))
 ;;;; # Site Generator
 (export
  '(generate-site

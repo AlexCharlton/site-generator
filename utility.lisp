@@ -129,4 +129,7 @@ Break a string by spaces and equals signs and return a plist of the unit value p
 
 ;;;; ### HTML
 (defmacro html (&body body)
-  `(with-html-output-to-string (,(gensym)) ,@body))
+  `(with-html-output-to-string (,(gensym) nil
+				 :prologue ,(eq (first body) :html)
+				 :indent t)
+     ,@body))
