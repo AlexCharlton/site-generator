@@ -1,0 +1,7 @@
+$(html
+   (:html
+     (:head
+       (:meta :charset "UTF-8")
+       (:title (str (when (bound? title) (echo title " — ")))
+               (str site-name)))
+     (:body (str contents))))
