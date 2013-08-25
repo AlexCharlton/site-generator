@@ -22,7 +22,7 @@ main.html
 
 :footer-text lang=en
 This is the end of the page$(when (bound? title)
-                             (echo " " (process-content
+                             (echo " " (markup
 			                 (echo "\"" title
 			                       "\" (these should be curly quotes)")
 			                 :output-format :markdown

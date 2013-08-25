@@ -551,10 +551,10 @@ TODO: Create formatted string of links."
   "String &key (ul-class String) (selected-class String) -> String
 Return an html list of links to the current page in all languagse"
   (let ((page (get-data :current-file)))
-    (with-html-output-to-string (s)
+    (html
       (:ul :class ul-class
 	   (loop for lang in (get-data :languages)
 	      do (if (eq lang (get-data :lang))
-		     (htm (:li :class selected-class (fmt "~a" lang)))
+		     (htm (:li :class selected-class (str lang)))
 		     (htm (:li (:a :href (page-address page :lang lang)
-				   (fmt "~a" lang))))))))))
+				      (str lang))))))))))

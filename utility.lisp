@@ -1,5 +1,6 @@
 (in-package :site-generator)
 ;;;; ## Utility functions
+(export '(html))
 
 ;;;; ### Files and directories
 (defun touch-file (file)
@@ -126,3 +127,6 @@ Break a string by spaces and equals signs and return a plist of the unit value p
 	    (error "Improper date entered: ~s" s))
 	  (collect unit) (collect val))))
 
+;;;; ### HTML
+(defmacro html (&body body)
+  `(with-html-output-to-string (,(gensym)) ,@body))

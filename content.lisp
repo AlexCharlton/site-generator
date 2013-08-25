@@ -16,8 +16,9 @@
 ;;;; Two pieces of configuration are unlike the others in that they also have languages associated with them: :SLUG and :DIRECTORY-SLUG. These are the strings that the URLS for a given page are created with, :SLUG being the URL-name of an actual page, while :DIRECTORY-SLUG is the URL-name of the directory in which pages reside. Consequentially, they are parsed like normal content, despite their special meaning.
 (export
  '(parse-content
-   process-content
-   *environment*))
+   markup
+   *environment*
+   get-data))
 
 ;;;; Data is named and stored in a plist referred to as an "environment". Data appears either in the form:
 ;;;; Value
@@ -25,19 +26,20 @@
 ;;;; ({Language-keyword (content &rest arguments)}+)
 ;;;; The former referring to a piece of configuration, while the latter refers to a piece of content (or a slug).
 
-(defvar *environment*
+(defparameter *environment*
   '(:languages (:en)
     :default-language :en
+    :default (:content (:markup :markdown))
     :pages-as-directories :true
     :output-format :html5
     :markup :none
     :smart :true
     :toc :false
     :highlight :true
-    :use (:cl :site-generator :iterate))
+    :use (:cl :site-generator :cl-who))
   "The default environment.")
 
-(defvar *config-vars*
+(defparameter *config-vars*
   `(:template ,#'first-line
     :languages ,#'keywords
     :default-language ,#'string->keyword
@@ -57,6 +59,8 @@
 			      (list var args)))
 			  (lines x)))
     :server ,#'first-line
+    :pre-publish ,#'identity
+    :cl-environment ,#'identity
     :date ,#'parse-date
     :slug nil
     :directory-slug nil
@@ -186,8 +190,8 @@ Break a string by spaces and equals signs and return a list of the resulting str
 ;;; ### Mark up content
 (defvar *pandoc-supported-args*
   `(:output-format ,(lambda (x) (format nil "--to=~(~a~)" x))
-    :markup ,(lambda (x) (format nil "--from=~(~a~)" x))
-    :smart ,(lambda (x) (when (eq x :true) "--smart"))
+		   :markup ,(lambda (x) (format nil "--from=~(~a~)" x))
+		   :smart ,(lambda (x) (when (eq x :true) "--smart"))
     :toc ,(lambda (x) (when (eq x :true) "--toc"))
     :toc-depth ,(lambda (x) (format nil "--toc-depth=~(~a~)" x))
     :highlight ,(lambda (x) (when (not (eq x :true)) "--no-highlight"))
@@ -219,7 +223,7 @@ Spawning a new pandoc process is slow, so this is not the prefered way of doing 
 			 (namestring (pathname s)))
 	   :output :string))))
 
-(defun process-content (content &rest args)
+(defun markup (content &rest args)
   "String &rest (Key Value) -> String
 Unless, :MARKUP in ARGS or *ENVIRONMENT* is :NONE, process content using pandoc."
   (let ((markup (or (getf args :markup)
