@@ -31,7 +31,6 @@
   last-modified
   creation-date
   date
-  tags
   author
   title
   template
@@ -202,9 +201,6 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 	       :date (if-let ((date (get-data :date)))
 		       (make-time date creation-date)
 		       creation-date)
-	       :tags (iter (for (lang tags) on (getf *environment* :tags) by #'cddr)
-			   (collect lang)
-			   (collect (split-comma-or-space-separated (first tags))))
 	       :author (getf *environment* :author)
 	       :title (getf *environment* :title)
 	       :template template
@@ -529,11 +525,6 @@ Return the root relative address of the page denoted by PATH in the appropriate 
     (path lang (format '(:long-month " " :ordinal-day ", " :year " " :hour ":" (:min 2) " " :timezone)))
   "String &keys (lang Keyword) (format (Keyword or String or (Keyword Integer &optional Character))) -> String"
   (format-timestring nil date :format format))
-
-(def-page-accessor page-tags content-entry-tags tags (path lang)
-  "String &keys (lang Keyword) -> (String)
-TODO: Create formatted string of links."
-  tags)
 
 (def-page-accessor page-title content-entry-title title (path lang)
   "String &keys (lang Keyword) -> String"
