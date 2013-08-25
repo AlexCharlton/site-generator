@@ -57,6 +57,7 @@
 			      (list var args)))
 			  (lines x)))
     :server ,#'first-line
+    :date ,#'parse-date
     :slug nil
     :directory-slug nil
     :lang t

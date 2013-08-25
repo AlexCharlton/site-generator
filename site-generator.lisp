@@ -1,6 +1,8 @@
 (in-package :site-generator)
 (eval-when (:execute :load-toplevel :compile-toplevel)
-  (com.dvlsoft.clon:nickname-package))
+  (com.dvlsoft.clon:nickname-package)
+  (enable-read-macros))
+(setf (html-mode) :html5)
 ;;;; # Site Generator
 (export
  '(generate-site
@@ -26,6 +28,7 @@
   "An record of a content file of the information that is used for generating the site and that should be known between other files. Stored in *DB*."
   needs-update
   last-modified
+  creation-date
   date
   tags
   author
@@ -187,25 +190,27 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 	      (> (file-write-date file) (content-entry-last-modified entry))
 	      (not (equal configs (content-entry-configs entry)))
 	      (not (equal template (content-entry-template entry))))
-      (setf (gethash relative-path *db*)
-	    (make-content-entry
-	     :needs-update t
-	     :last-modified (file-write-date file)
-	     :date (if-let ((date (get-data :date)))
-		     date 
-		     (if entry
-			 (content-entry-date entry)
-			 (file-write-date file)))
-	     :tags (iter (for (lang tags) on (getf *environment* :tags) by #'cddr)
-			 (collect lang)
-			 (collect (split-comma-or-space-separated )))
-	     :author (getf *environment* :author)
-	     :title (getf *environment* :title)
-	     :template template
-	     :configs configs
-	     :pages (get-pages file (add-slugs (get-file-slugs file) dir-slugs))
-	     :old-pages (when entry
-			  (content-entry-old-pages entry)))))))
+      (let ((creation-date (if entry
+			       (content-entry-creation-date entry)
+			       (universal-to-timestamp (file-write-date file)))))
+	(setf (gethash relative-path *db*)
+	      (make-content-entry
+	       :needs-update t
+	       :last-modified (file-write-date file)
+	       :creation-date creation-date
+	       :date (if-let ((date (get-data :date)))
+		       (make-time date creation-date)
+		       creation-date)
+	       :tags (iter (for (lang tags) on (getf *environment* :tags) by #'cddr)
+			   (collect lang)
+			   (collect (split-comma-or-space-separated (first tags))))
+	       :author (getf *environment* :author)
+	       :title (getf *environment* :title)
+	       :template template
+	       :configs configs
+	       :pages (get-pages file (add-slugs (get-file-slugs file) dir-slugs))
+	       :old-pages (when entry
+			    (content-entry-old-pages entry))))))))
 
 (defun needs-update ()
   "nil -> ((Pathname Entry (Pathname)))
@@ -380,7 +385,7 @@ Print the contents of *DB* into *DB-FILE*, as a Plist."
 Parse a config file using PARSE-CONTENT, throwing errors if any settings are used that shouldn't be."
   (let+ ((env (if (file-exists-p config-file)
 		  (parse-content config-file))))
-    (iter (for key in '(:slug :lang :current-file))
+    (iter (for key in '(:slug :lang :current-file :date))
 	  (when (getf env key)
 	    (error "~s definition not allowed in a config file, found in ~a"
 		   key config-file)))
@@ -489,15 +494,24 @@ Return value of SYMBOL if bound, silencing UNBOUND-VARIABLE errors."
      (defun ,name (,path &key ,lang ,@more-keys)
        ,(if (stringp (first body))
 	    (first body))
-       (let* ((,lang (or ,lang (getf *environment* :lang)))
-	      (entry (gethash (pathname ,path) *DB*))
-	      (value (,entry-accessor entry))
-	      (,value-var (or (getf value lang)
-			      (getf value (getf *environment* :default-language)))))
-	 (when ,value-var
-	   ,@(if (stringp (first body))
-		 (rest body)
-		 body))))
+       (let* ((,path (if (eq ,path :current)
+			 (get-data :current-file)
+			 ,path))
+	      (,lang (or ,lang (getf *environment* :lang)))
+	      (entry (gethash (pathname ,path) *DB*)))
+	 (unless entry
+	   (error "Tried to access information about a page that doesn't exist: ~s"
+		  ,path))
+	 (let* ((value (,entry-accessor entry))
+		(,value-var (if (listp value)
+				(or (getf value lang)
+				    (getf value (getf *environment*
+						      :default-language)))
+				value)))
+	   (when ,value-var
+	     ,@(if (stringp (first body))
+		   (rest body)
+		   body)))))
      (export ',name)))
 
 (def-page-accessor page-address content-entry-pages address (path lang)
@@ -509,10 +523,10 @@ Return the root relative address of the page denoted by PATH in the appropriate 
 		(namestring address))
    "/"))
 
-(def-page-accessor page-date content-entry-date date (path lang)
-  "String &keys (lang Keyword) -> String
-TODO: Format date"
-  date)
+(def-page-accessor page-date content-entry-date date
+    (path lang (format '(:long-month " " :ordinal-day ", " :year " " :hour ":" (:min 2) " " :timezone)))
+  "String &keys (lang Keyword) (format (Keyword or String or (Keyword Integer &optional Character))) -> String"
+  (format-timestring nil date :format format))
 
 (def-page-accessor page-tags content-entry-tags tags (path lang)
   "String &keys (lang Keyword) -> (String)
@@ -526,6 +540,11 @@ TODO: Create formatted string of links."
 (def-page-accessor page-author content-entry-author author (path lang)
   "String &keys (lang Keyword) -> String"
   author)
+
+(def-page-accessor page-last-modified content-entry-last-modified date
+    (path lang (format '(:long-month " " :ordinal-day ", " :year " " :hour ":" (:min 2) " " :timezone)))
+  "String &keys (lang Keyword) (format (Keyword or String or (Keyword Integer &optional Character)))-> String"
+  (format-timestring nil (universal-to-timestamp date) :format format))
 
 (defun other-languages (&key (ul-class "languages") (selected-class "current-langage"))
   "String &key (ul-class String) (selected-class String) -> String

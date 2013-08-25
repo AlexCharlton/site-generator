@@ -1,0 +1,10 @@
+:contents
+$(html (:header (:h1 "Archive")))
+$nav$
+$content$
+
+:title
+Archive
+
+:content
+Bye!

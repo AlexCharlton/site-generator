@@ -93,3 +93,36 @@ Return a list of n ELTs."
     (iter (for (k v) on plist-new by #'cddr)
 	  (setf (getf base k) v))
     base))
+
+;;; ### Time
+(defun make-time (element-list fallback)
+  (let ((unit-accessor (list :second #'timestamp-second
+			     :minute #'timestamp-minute
+			     :hour #'timestamp-hour
+			     :day #'timestamp-day
+			     :month #'timestamp-month
+			     :year #'timestamp-year)))
+    (iter (for (unit val) on element-list by #'cddr)
+	  (for base-time first fallback then time)
+	  (for time = (timestamp+ (timestamp-
+				   base-time
+				   (funcall (getf unit-accessor unit)
+					    fallback)
+				   unit)
+				  val unit))
+	  (finally (return time)))))
+
+(defun parse-date (s)
+  "String -> Plist
+Break a string by spaces and equals signs and return a plist of the unit value pairs."
+  (iter (for (unit val) on (mapcan (lambda (x) 
+				     (split "=" x))
+				   (split-comma-or-space-separated s))
+	     by #'cddr)
+	(let ((unit (string->keyword unit))
+	      (val (parse-integer val :junk-allowed t)))
+	  (unless (and (find unit '(:second :minute :hour :day :month :year))
+		       (integerp val))
+	    (error "Improper date entered: ~s" s))
+	  (collect unit) (collect val))))
+
