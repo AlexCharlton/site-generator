@@ -24,27 +24,27 @@
 			 :lang :en)))
    (with-env
      (is (string= "Foo baz."
-		  (expand-string-to-string "Foo $bar$.")))
+		  (expand-string "Foo $bar$.")))
      (is (string= "Foo baz quox."
-		  (expand-string-to-string "Foo $(concatenate 'string bar \" quox\").")))
+		  (expand-string "Foo $(concatenate 'string bar \" quox\").")))
      (is (string= "Foo baz."
-		  (expand-string-to-string "Foo $foo$.")))
+		  (expand-string "Foo $foo$.")))
      (is (string= "Foo baz."
-		  (expand-string-to-string "Foo $baz$.")))
+		  (expand-string "Foo $baz$.")))
      (is (string= "$ hello"
-		  (expand-string-to-string "$ hello")))
+		  (expand-string "$ hello")))
      (is (string= "$hello there$"
-		  (expand-string-to-string "$hello there$")))
+		  (expand-string "$hello there$")))
      (is (string= "$hello"
-		  (expand-string-to-string "\\$hello")))
+		  (expand-string "\\$hello")))
      (is (string= "\\baz"
-		  (expand-string-to-string "\\\\$bar$")))
+		  (expand-string "\\\\$bar$")))
      (is (string= "\\$hello"
-		  (expand-string-to-string "\\\\\\$hello")))
+		  (expand-string "\\\\\\$hello")))
      (is (string= "\\\\ hello"
-		  (expand-string-to-string "\\\\ hello")))
+		  (expand-string "\\\\ hello")))
      (is (string= "\\\\ baz"
-		  (expand-string-to-string "\\\\ $bar$"))))))
+		  (expand-string "\\\\ $bar$"))))))
 
 (test content-parsing
   (is (equal '(:foo)
@@ -61,7 +61,7 @@
 	  ("Ceci est la fin de la page$(when (bound? title) (echo \" \\\"\" title \"\\\"\")).")
 	  :EN
 	  ("This is the end of the page$(when (bound? title)
-                             (echo \" \" (process-content
+                             (echo \" \" (markup
 			                 (echo \"\\\"\" title
 			                       \"\\\" (these should be curly quotes)\")
 			                 :output-format :markdown
@@ -76,7 +76,7 @@
 * [About site-generator]($(page-address \"about\"))
 * [Foo]($(page-address \"foo/bar\"))"))
 	 :TEMPLATE "main.html" :LANGUAGES (:EN :FR) :SERVER
-	 (:EN ("alexcharlton@alex-charlton.com:alex-charlton.com/")) :SITE-NAME
+	 "alexcharlton@alex-charlton.com:alex-charlton.com/" :SITE-NAME
 	 (:EN ("site-generator")))
        (parse-content (merge-pathnames "../examples/example-site/content/config"
 				       *test-dir*))))
@@ -90,10 +90,10 @@
     (is (string= "--to=html5 --from=markdown --toc"
 		 (sg::generate-pandoc-args '()))))
   (is (string= "<h1 id=\"foo\">foo</h1>"
-	       (process-content "# foo" :markup :markdown :output-format :html)))
+	       (markup "# foo" :markup :markdown :output-format :html)))
   (let ((*environment* '(:markup :none)))
     (is (string= "foo"
-		 (process-content "foo")))))
+		 (markup "foo")))))
 
 (test site-generator
   (is (equal '(:en #p"foo/bar" :fr #p"lefoo/lebar")
@@ -108,14 +108,17 @@
 				       '(:foo "bar"
 					 :default (:nav (:markup :none
 							 :output-format :html5))))))
+  (is (equal "A_propos_de_site-generator"
+	     (sg::slugify  "“À propos de site-generator”")))
   (is (equal "Hello_there_90"
 	     (sg::slugify "Hello  there<> 90")))
-  (is (equal '(:en "foo/" :fr "baz/")
-	     (sg::get-dir-slugs "foo/config" '(:directory-slug (:fr ("baz"))
-					       :languages (:en :fr)))))
-  (is (equal '(:en "" :fr "fr/")
-	     (sg::get-dir-slugs "config" '(:languages (:en :fr)
-					   :default-language :en))))
+  (let ((sg::*content-dir* #p""))
+    (is (equal '(:en "foo/" :fr "baz/")
+	       (sg::get-dir-slugs "foo/config" '(:directory-slug (:fr ("baz"))
+						 :languages (:en :fr)))))
+   (is (equal '(:en "" :fr "fr/")
+	      (sg::get-dir-slugs "config" '(:languages (:en :fr)
+					    :default-language :en)))))
   (let ((*environment* '(:languages (:en :fr :gr)
 			 :pages-as-directories t
 			 :title (:en ("Hello there"))
@@ -138,3 +141,9 @@
 		((#P"main.html" . 3585328208) (#P"footer.html" . 3585328073)
 		 (#P"header.html" . 3586212646))
 		((#P"other.html" . 3585327838)))))))
+
+(test utils
+  (is (local-time:timestamp=
+       (local-time:encode-timestamp 0 0 0 12 23 4 2013)
+       (sg::make-time '(:day 23 :hour 12 :minute 0)
+		      (local-time:encode-timestamp 0 0 1 6 2 4 2013)))))
