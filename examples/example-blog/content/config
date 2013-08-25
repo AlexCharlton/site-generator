@@ -1,0 +1,12 @@
+:site-name
+Example Blog
+
+:template
+main.html
+
+:nav
+$(html (:nav
+         (:ul 
+           (:li (:a :href (page-address "index") "Home"))
+           (:li (:a :href (page-address "archive") "Archives")))))
+	     

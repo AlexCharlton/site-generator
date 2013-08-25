@@ -1,0 +1,11 @@
+:contents
+$(html (:header (:h1 (str site-name))))
+$nav$
+$content$
+
+:content
+HI! $(foo)
+
+:cl-environment
+(defun foo ()
+  "I'm a function!")

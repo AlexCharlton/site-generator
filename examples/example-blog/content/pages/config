@@ -1,0 +1,6 @@
+:contents
+$(html (:header (:h1 (str site-name))))
+$nav$
+$(html (:article (:h2 (str title))
+           (:div (:div (str author)) (:div (str (page-date :current))))
+	   (str (content))))
