@@ -26,6 +26,13 @@
 	       (setf (symbol-value (intern (symbol-name var))) data))))
      ,@body
      (delete-package *package*)))
+       (when-let ((cl-env (get-data :cl-environment)))
+	 (with-input-from-string (s cl-env)
+	   (iter (for expr = (read s nil 'eof))
+		 (until (eq expr 'eof))
+		 (eval expr))))
+       ,@body
+       (delete-package *package*))))
 
 (defun expand (input &key (output *standard-output*))
   "Stream (:output Stream) -> nil
