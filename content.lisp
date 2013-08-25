@@ -143,7 +143,7 @@ Merge two :DEFAULT plists."
 		  (macro-function (intern (symbol-name var)))
 		  (lambda (call env)
 		    (declare (ignore call env))
-		    (append (list 'markup (expand-string-to-string data))
+		    (append (list 'markup (expand-string data))
 			    args)))))))
 
 (defun set-up-cl-environment ()

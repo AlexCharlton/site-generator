@@ -251,7 +251,7 @@ For the file PAGE, write the expansion of the current template with the current 
 					 *template-dir*)
 			:direction :input)
       (with-env
-	(expand in :output out)))))
+	(expand in out)))))
 
 (defun delete-old-pages (entry)
   "Entry -> nil
