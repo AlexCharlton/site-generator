@@ -22,7 +22,7 @@
 			 :baz (:en ("$foo$"))
 			 :markup :none
 			 :lang :en)))
-   (with-env
+   (with-environment
      (is (string= "Foo baz."
 		  (expand-string "Foo $bar$.")))
      (is (string= "Foo baz quox."
@@ -126,9 +126,9 @@
     (is (equal '(:en "Hello_there" :fr "foo" :gr "hello")
 	 (sg::get-file-slugs "hello")))
     (is (equal '(:en "foo/index.html" :fr "fr/bar/index.html" :gr "gr/quox/index.html")
-	       (sg::get-pages "foo" '(:en "foo" :fr "fr/bar" :gr "gr/quox"))))
+	       (sg::get-page-paths "foo" '(:en "foo" :fr "fr/bar" :gr "gr/quox"))))
     (is (equal '(:en "index.html" :fr "fr/index.html" :gr "gr/index.html")
-	       (sg::get-pages "index"
+	       (sg::get-page-paths "index"
 			      '(:en "index" :fr "fr/index" :gr "gr/index")))))
   (is (equal '(((#P"footer.html" . 3585328073) (#P"other.html" . 3585327838))
 		((#P"header.html" . 3586212646))
