@@ -1,13 +1,16 @@
 (in-package :site-generator)
 ;;;; ## Utility functions
 (export '(html
+	  rss
 	  lines
 	  words
 	  first-line
 	  trim
 	  join-strings
 	  echo
-	  bound?))
+	  bound?
+	  +rfc+
+	  build-time))
 
 ;;;; ### Files and directories
 (defun touch-file (file)
@@ -153,6 +156,8 @@ Return a list of n ELTs."
 
 
 ;;; ### Time
+(defconstant +rfc+ +rfc-1123-format+)
+
 (defun make-time (element-list fallback)
   (let ((unit-accessor (list :second #'timestamp-second
 			     :minute #'timestamp-minute
@@ -184,14 +189,26 @@ Break a string by spaces and equals signs and return a plist of the unit value p
 	    (error "Improper date entered: ~s" s))
 	  (collect unit) (collect val))))
 
+(defun build-time ()
+  "nil -> String
+Return the RFC formated time corresponding to when the function is called."
+  (format-timestring nil (now) :format +rfc+))
 
-;;;; ### HTML
+;;;; ### XML
 (defmacro html (&body body)
-  `(with-html-output-to-string (,(gensym) nil
-				 :prologue ,(eq (caar body) :html)
-				 :indent t)
+  `(with-html-output-to-string
+       (,(gensym) nil
+	 :prologue ,(eq (caar body) :html)
+	 :indent t)
      ,@body))
 
+(defmacro rss (&body body)
+  `(with-html-output-to-string
+       (,(gensym) nil
+	 :prologue ,(when (eq (caar body) :rss)
+			  "<?xml version='1.0' encoding='utf-8'?>")
+	 :indent t)
+     ,@body))
 
 ;;;; ### Symbols
 (defmacro bound? (symbol)

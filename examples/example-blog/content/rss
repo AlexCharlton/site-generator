@@ -1,0 +1,5 @@
+:extension
+xml
+
+:template
+rss.lisp

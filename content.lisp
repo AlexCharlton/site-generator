@@ -61,6 +61,7 @@
 			      (list var args)))
 			  (lines x)))
     :server ,#'first-line
+    :extension ,#'(lambda (x) (first (words x)))
     :pre-publish ,#'identity
     :cl-environment ,#'identity
     :commands ,#'escaped-lines

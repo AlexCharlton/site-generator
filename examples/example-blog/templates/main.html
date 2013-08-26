@@ -3,6 +3,8 @@ $(html
      (:head
        (:meta :charset "UTF-8")
        (:link :href "/static/style.css" :rel "stylesheet" :type "text/css")
+       (:link :href "/rss.xml" :rel "alternate" :type "application/rss+xml"
+              :title "Example blog RSS feed")
        (:title (str (when (bound? title) (echo title " — ")))
                (str site-name)))
      (:body (str contents))))

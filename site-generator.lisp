@@ -3,7 +3,7 @@
   (com.dvlsoft.clon:nickname-package)
   (enable-read-macros))
 (setf (html-mode) :html5
-      *html-no-indent-tags* '(:pre :textarea :b :a :li :title))
+      *html-no-indent-tags* '(:pre :textarea :b :a :li :title :link :lastbuilddate :pubdate :guid))
 ;;;; # Site Generator
 (export
  '(generate-site
@@ -332,12 +332,15 @@ Return a Plist of appropriate directory slugs, one for each language. The :DIREC
 Return a plist of the relative paths of the pages for FILE, given its SLUGS. This depends upon :PAGES-AS-DIRECTORIES."
   (iter (for lang in (getf *environment* :languages))
 	(collect lang)
-	(collect (concatenate 'string
-			   (namestring (getf slugs lang))
-			   (when (and (getf *environment* :pages-as-directories)
-				      (string/= (pathname-name file) "index"))
-			     "/index")
-			   ".html"))))
+	(collect (join-strings ""
+			       (namestring (getf slugs lang))
+			       (when (and (get-data :pages-as-directories)
+					  (string/= (pathname-name file) "index")
+					  (not (get-data :extension)))
+				 "/index")
+			       "."
+			       (or (get-data :extension)
+				   "html")))))
 
 (defun slugify (slug)
   "Pathspec -> String
