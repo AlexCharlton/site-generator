@@ -197,12 +197,16 @@ Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDA
 (defun update-entry (file configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
 Update the *DB* ENTRY of FILE when the given content file is new or has been updated, one if the file's configs have been updated, or when the file's template has been updated."
-  (let* ((*environment* (merge-environments (parse-page file)
+  (let+ ((*environment* (merge-environments (parse-page file)
 					    *environment*))
 	 (relative-path (directory-minus file *content-dir*))
 	 (entry (gethash relative-path *db*))
 	 (template (get-template (get-data :template)
-				 (gethash :templates *db*))))
+				 (gethash :templates *db*)))
+	 ((&flet get-values (name)
+	    (iter (for (lang content) on (getf *environment* name) by #'cddr)
+		  (collect lang)
+		  (collect (first content))))))
     (when (or (not entry)
 	      (> (file-write-date file) (content-entry-last-modified entry))
 	      (not (equal configs (content-entry-configs entry)))
@@ -218,8 +222,8 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 	       :date (if-let ((date (get-data :date)))
 		       (make-time date creation-date)
 		       creation-date)
-	       :author (getf *environment* :author)
-	       :title (getf *environment* :title)
+	       :author (get-values :author)
+	       :title (get-values :title)
 	       :template template
 	       :configs configs
 	       :pages (get-page-paths file (add-slugs (get-file-slugs file) dir-slugs))
