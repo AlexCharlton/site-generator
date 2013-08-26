@@ -26,7 +26,9 @@
   (iter (until *quit*)
 	(update-db)
 	(when-let ((needs-update (needs-update)))
-	  (update-site needs-update))
+	  (print-message "Updating changes")
+	  (update-site needs-update)
+	  (print-message "Finished updating changes"))
 	(sleep 1)))
 
 (defclass acceptor (hunchentoot:acceptor)
