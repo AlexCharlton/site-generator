@@ -237,7 +237,7 @@ Break a string by spaces and equals signs and return a list of the resulting str
 (defun generate-pandoc-args (args)
   "(Plist) -> String
 Turn a Plist of arguments and *ENVIRONMENT* into a string understood by pandoc. *PANDOC-SUPPORTED-ARGS* is used for this mapping."
-  (apply #'join-strings
+  (apply #'join-strings " "
    (iter (for (supported-arg fn) on *pandoc-supported-args* by #'cddr)
 	 (if-let ((val (or (getf args supported-arg)
 			   (getf *environment* supported-arg))))
@@ -253,7 +253,7 @@ Spawning a new pandoc process is slow, so this is not the prefered way of doing 
 	  (write-char char s))
     (file-position s 0)
     (trim (asdf/interface::run-program 
-	   (join-strings "pandoc"
+	   (join-strings " " "pandoc"
 			 (generate-pandoc-args args)
 			 (namestring (pathname s)))
 	   :output :string))))

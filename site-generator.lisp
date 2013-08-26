@@ -500,7 +500,7 @@ Treat the string as a path to a template in *TEMPLATE-DIR* and return the conten
 (defun echo (&rest strings)
   "&rest Strings -> String
 Concatenate the strings"
-  (apply #'concatenate 'string strings))
+  (apply #'join-strings "" strings))
 
 (defmacro bound? (symbol)
   "Symbol -> Boolean

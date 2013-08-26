@@ -87,10 +87,10 @@ Split a string by newlines."
   "String -> String"
   (first (lines string)))
 
-(defun join-strings (&rest strings)
-    " (String) -> String
-Concatenates a list of strings and puts spaces between the elements. (from Common Lisp Cookbook)"
-    (format nil "~{~a~^ ~}" (remove nil strings)))
+(defun join-strings (separator &rest strings)
+    "(String) -> String
+Concatenates a list of strings and puts SEPARATOR between the elements."
+    (format nil (format nil "~~{~~a~~^~a~~}" separator) (remove nil strings)))
 
 (defun trim (string)
   "String -> String
