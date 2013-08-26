@@ -40,7 +40,7 @@ Return true if the path represents a hidden file."
 (defun cwd (&optional dir)
   "Change directory and set default pathname.
 
-Taken from http://files.b9.com/lboot/utils.lisp"
+Modified from http://files.b9.com/lboot/utils.lisp"
   (cond
    ((not (null dir))
     (when (and (typep dir 'logical-pathname)
@@ -173,3 +173,21 @@ Break a string by spaces and equals signs and return a plist of the unit value p
 				 :prologue ,(eq (caar body) :html)
 				 :indent t)
      ,@body))
+
+
+;;;; ### System
+(defun quit (&optional (code 0))
+  "Function to exit the Lisp implementation.
+
+Modified from http://files.b9.com/lboot/utils.lisp"
+    #+allegro (excl:exit code :quiet t)
+    #+clisp (#+lisp=cl ext:quit #-lisp=cl lisp:quit code)
+    #+(or cmu scl) (ext:quit code)
+    #+cormanlisp (win32:exitprocess code)
+    #+gcl (lisp:bye code)
+    #+lispworks (lw:quit :status code)
+    #+lucid (lcl:quit code)
+    #+sbcl (sb-ext:exit :code (typecase code (number code) (null 0) (t 1)))
+    #+mcl (ccl:quit code)
+    #-(or allegro clisp cmu scl cormanlisp gcl lispworks lucid sbcl mcl)
+    (error 'not-implemented :proc (list 'quit code)))
