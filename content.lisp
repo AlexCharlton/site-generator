@@ -18,7 +18,7 @@
 (export
  '(parse-content
    markup
-   with-env
+   with-environment
    *environment*
    get-data))
 
@@ -124,7 +124,7 @@ Merge two :DEFAULT plists."
     base))
 
 ;;;; ## Evaluation environment
-(defmacro with-env (&body body)
+(defmacro with-environment (&body body)
   "Evaluate the BODY in a semi anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
   `(let ((*package* (defpackage ,(gensym "environment")
 		      ,(cons :use (getf *environment* :use)))))

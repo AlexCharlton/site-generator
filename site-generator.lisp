@@ -264,7 +264,7 @@ For the file PAGE, write the expansion of the current template with the current 
     (with-open-file (in (merge-pathnames (getf *environment* :template)
 					 *template-dir*)
 			:direction :input)
-      (with-env
+      (with-environment
 	(handler-case 
 	    (expand in out)
 	  (end-of-file ()
