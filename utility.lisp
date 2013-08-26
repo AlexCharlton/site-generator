@@ -19,21 +19,6 @@ Ensure that a file exists."
   (with-open-file (s file
 		     :if-does-not-exist :create)))
 
-(defun directory-minus (path dir)
-  "Pathspec Pathspec -> Pathname
-If DIR represents the beginning of PATH, return the parts of PATH that are not part of DIR."
-  (let ((path (namestring path))
-	(dir (namestring dir)))
-    (pathname
-     (if (equal (search dir path) 0)
-	 (subseq path (length dir))
-	 path))))
-
-(defun path-directory (path)
-  "Pathspec -> Pathname
-Return the directory portion of the given path."
-  (make-pathname :directory (pathname-directory path)))
-
 (defun parent-directory (path)
   "Pathspec -> String
 Return the name of the directory that contains PATH."

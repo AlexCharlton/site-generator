@@ -39,7 +39,7 @@
   (let* ((uri (subseq (hunchentoot:script-name request) 1))
 	(file (merge-pathnames uri *site-dir*)))
     (when (file-exists-p file)
-      (if (eq (osicat:file-kind file) :directory)
+      (if (eq (file-kind file) :directory)
 	  (hunchentoot:handle-static-file (merge-pathnames "index.html"
 							   (pathname-as-directory file)))
 	  (hunchentoot:handle-static-file file)))))

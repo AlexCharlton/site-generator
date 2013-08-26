@@ -115,7 +115,7 @@ Determine if a *ROOT-DIR* is a site-generator directory."
 Recursively walk a site, tracking and parsing configs, working out slugs and calling UPDATE-ENTRY on all non config files."
   (let* ((config (merge-pathnames "config" dir))
 	 (config-contents (when (file-exists-p config)
-			    (push (cons (directory-minus config *content-dir*)
+			    (push (cons (unmerge-pathnames config *content-dir*)
 					(file-write-date config))
 				  configs)
 			    (parse-config config)))
@@ -134,7 +134,7 @@ Recursively walk a site, tracking and parsing configs, working out slugs and cal
 Return the list of template pathnames consed to the templates they depend on where a dependancy is a (path . file-write-date) pair."
   (let+ (templates
 	 ((&flet get-depends (path)
-	    (push (cons (cons (directory-minus path *template-dir*)
+	    (push (cons (cons (unmerge-pathnames path *template-dir*)
 			      (file-write-date path)) nil) templates)
 	    (with-open-file (s path)
 	      (iter (for line = (read-line s nil 'eof))
@@ -187,7 +187,7 @@ Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDA
 		(gen-site (rest configs) configs-parsed))))))
     (ensure-directories-exist *site-dir*)
     (unless (directory-exists-p (merge-pathnames "static/" *site-dir*))
-      (osicat:make-link (merge-pathnames "static" *site-dir*)
+      (make-link (merge-pathnames "static" *site-dir*)
 			:target *static-dir*))
     (iter (for config in configs)
 	  (gen-site (reverse config) nil))
@@ -199,7 +199,7 @@ Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDA
 Update the *DB* ENTRY of FILE when the given content file is new or has been updated, one if the file's configs have been updated, or when the file's template has been updated."
   (let+ ((*environment* (merge-environments (parse-page file)
 					    *environment*))
-	 (relative-path (directory-minus file *content-dir*))
+	 (relative-path (unmerge-pathnames file *content-dir*))
 	 (entry (gethash relative-path *db*))
 	 (template (get-template (get-data :template)
 				 (gethash :templates *db*)))
@@ -259,7 +259,7 @@ After deleting the old pages in the entry, parse the file and for each language,
 For the file PAGE, write the expansion of the current template with the current environment found in *ENVIRONMENT*."
   (unless (getf *environment* :template)
     (error "Template not specified for page: ~a" page))
-  (print-message "Writing page ~a" (directory-minus page *site-dir*))
+  (print-message "Writing page ~a" (unmerge-pathnames page *site-dir*))
   (ensure-directories-exist page)
   (with-open-file (out page
 		       :direction :output
@@ -289,9 +289,9 @@ Recurs depth first through a directory tree, deleting all directories that do no
 	(when (directory-pathname-p file)
 	  (remove-empty-directories file)))
   (handler-case (unless (list-directory dir)
-		  (osicat:delete-directory dir)
+		  (delete-directory dir)
 		  (print-message "Removing unused directory: ~a"
-				 (directory-minus dir *site-dir*)))
+				 (unmerge-pathnames dir *site-dir*)))
     (osicat-posix:enotdir () nil)))
 
 (defun get-file-slugs (content-file)
@@ -312,14 +312,14 @@ Return a Plist of appropriate file slugs, one for each language. The :SLUG prope
 (defun get-dir-slugs (config-file env)
   "Pathname Plist -> Plist
 Return a Plist of appropriate directory slugs, one for each language. The :DIRECTORY-SLUG property is given priority, and the name of the directory in which the config file resides is fallen back upon for that directory slug. If this is the top level directory, the name of the language is used for all but the default language."
-  (let+ ((relative-dir (directory-minus (path-directory config-file)
-				       *content-dir*)))
+  (let+ ((relative-dir (unmerge-pathnames (pathname-directory-pathname config-file)
+					  *content-dir*)))
     (iter (for lang in (or (getf env :languages)
 			   (getf *environment* :languages)))
 	  (collect lang)
 	  (collect (slugify
 		    (pathname-as-directory
-		     (or (when (pathname-equal relative-dir #p"")
+		     (or (when (equal relative-dir #p"")
 			   (if (eq lang (or (getf env :default-language)
 					    (getf *environment* :default-language)))
 			       ""
@@ -416,8 +416,8 @@ Parse a config file using PARSE-CONTENT, throwing errors if any settings are use
 	  (when (getf env key)
 	    (error "~s definition not allowed in a config file, found in ~a"
 		   key config-file)))
-    (unless (equal (directory-minus (path-directory config-file)
-				  *content-dir*)
+    (unless (equal (unmerge-pathnames (pathname-directory-pathname config-file)
+				      *content-dir*)
 		 #p"")
       (iter (for key in *top-level-config-vars*)
 		   (when (getf env key)
