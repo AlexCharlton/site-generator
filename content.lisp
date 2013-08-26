@@ -57,12 +57,13 @@
     :math ,#'string->keyword
     :default ,#'(lambda (x)
 		  (mapcan (lambda (line)
-			    (let+ (((var &rest args) (is-variable? line)))
+	   		    (let+ (((var &rest args) (is-variable? line)))
 			      (list var args)))
 			  (lines x)))
     :server ,#'first-line
     :pre-publish ,#'identity
     :cl-environment ,#'identity
+    :commands ,#'escaped-lines
     :date ,#'parse-date
     :slug nil
     :directory-slug nil

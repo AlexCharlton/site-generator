@@ -37,6 +37,41 @@ Return the name of the directory that contains PATH."
 Return true if the path represents a hidden file."
   (scan "^\\." (pathname-name path)))
 
+(defun cwd (&optional dir)
+  "Change directory and set default pathname.
+
+Taken from http://files.b9.com/lboot/utils.lisp"
+  (cond
+   ((not (null dir))
+    (when (and (typep dir 'logical-pathname)
+	       (translate-logical-pathname dir))
+      (setq dir (translate-logical-pathname dir)))
+    (when (stringp dir)
+      (setq dir (parse-namestring dir)))
+    #+allegro (excl:chdir dir)
+    #+sbcl (sb-posix:chdir dir)
+    #+clisp (#+lisp=cl ext:cd #-lisp=cl lisp:cd dir)
+    #+(or cmu scl) (setf (ext:default-directory) dir)
+    #+cormanlisp (ccl:set-current-directory dir)
+    #+(and mcl (not openmcl)) (ccl:set-mac-default-directory dir)
+    #+openmcl (ccl:cwd dir)
+    #+gcl (si:chdir dir)
+    #+lispworks (hcl:change-directory dir)
+    (setq cl:*default-pathname-defaults* dir))
+   (t
+    (let ((dir
+	   #+allegro (excl:current-directory)
+	   #+clisp (#+lisp=cl ext:default-directory #-lisp=cl lisp:default-directory)
+	   #+(or cmu scl) (ext:default-directory)
+	   #+sbcl (sb-unix:posix-getcwd/)
+	   #+cormanlisp (ccl:get-current-directory)
+	   #+lispworks (hcl:get-working-directory)
+	   #+mcl (ccl:mac-default-directory)
+	   #-(or allegro clisp cmu scl cormanlisp mcl sbcl lispworks) (truename ".")))
+      (when (stringp dir)
+	(setq dir (parse-namestring dir)))
+      dir))))
+
 ;;;; ### Strings and characters
 (defun words (string)
   "String -> (String)
@@ -70,6 +105,11 @@ Remove whitespace at the beginning and end of a string."
 Return true if CHAR is a whitespace character."
   (if (find char '(#\Space #\Newline #\Tab) :test #'char=)
       t))
+
+(defun escaped-lines (string)
+  "String -> (String)
+Returns the list of strings seperated by lines as per LINES, but backslashes at the end of lines escape the new line"
+  (lines (regex-replace-all "\\\\\\n" string " ")))
 
 ;;;; ### Keywords
 (defun string->keyword (s)

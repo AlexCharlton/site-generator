@@ -1,5 +1,7 @@
 (in-package :site-generator)
 ;;;; ## Test server
+(export '(run-test-server))
+
 (defvar *quit* nil)
 (defvar *acceptor*)
 

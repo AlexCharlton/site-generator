@@ -8,6 +8,7 @@
 (export
  '(generate-site
    init-site
+   run-commands
    include
    echo
    bound?
@@ -69,6 +70,17 @@ TODO?: Add keyword arguments to be inserted into config file"
   (touch-file (merge-pathnames "config" *content-dir*))
   (touch-file (merge-pathnames "index" *content-dir*)))
 
+(defun run-commands (dir)
+  "Pathname -> nil
+If there are any, run the command specified by the :commands variable in the top-level config file."
+  (set-root-dir dir)
+  (check-site)
+  (when-let ((commands (getf (parse-content (merge-pathnames "config" *content-dir*))
+			     :commands)))
+    (iter (for command in commands)
+	  (asdf/interface::run-program command 
+					      :output :interactive))))
+
 (defun set-root-dir (dir)
   "Pathspec -> nil
 Set the root directory of the site, and all corresponding directories."
@@ -77,7 +89,8 @@ Set the root directory of the site, and all corresponding directories."
 	*content-dir* (merge-pathnames "content/" *root-dir*)
 	*site-dir* (merge-pathnames "site/" *root-dir*)
 	*template-dir* (merge-pathnames "templates/" *root-dir*)
-	*static-dir* (merge-pathnames "static/" *root-dir*)))
+	*static-dir* (merge-pathnames "static/" *root-dir*))
+  (cwd *root-dir*))
 
 (defun check-site ()
   "nil -> nil
@@ -375,7 +388,7 @@ Print the contents of *DB* into *DB-FILE*, as a Plist."
     (prin1 (hash-table-plist *db*) s)))
 
 (defvar *top-level-config-vars*
-    '(:languages :default-language :use :pages-as-directories :server)
+    '(:languages :default-language :use :pages-as-directories :server :commands)
   "Variables that may only be defined in the top-level config file.")
 
 (defun parse-config (config-file)
@@ -406,6 +419,7 @@ Parse a page content file using PARSE-CONTENT and throw errors if any settings a
 		   key page-file)))
     env))
 
+
 ;;;; ## Command line interface
 (clon:defsynopsis (:postfix "DIRECTORY")
   (text :contents "site-generator is a static site generator. When called with no arguments, site-generator will generate the site-generator site that resides at DIRECTORY.")
@@ -418,6 +432,8 @@ Parse a page content file using PARSE-CONTENT and throw errors if any settings a
 	   :description "Lanch a test server for a site-generator site, updating the pages when files are changed on disk. Optionally accepts a value for the port on which the server listens."
 	   :fallback-value 4242
 	   :argument-name "PORT")
+  (flag :short-name "r" :long-name "run-commands"
+	:description "Before generating the site, run any commands that are set in the top-level config file.")
   (flag :short-name "q" :long-name "quiet"
 	:description "Silence output.")
   (flag :short-name "h" :long-name "help"
@@ -444,10 +460,12 @@ Entry point. Perform the relevant action based on the command line options."
 		  (sb-ext:exit))
 		 ((clon:getopt :short-name "i")
 		  (init-site dir)
-		  (sb-ext:exit))
-		 ((clon:getopt :short-name "p")
-		  (publish-site dir)
 		  (sb-ext:exit)))
+	       (when (clon:getopt :short-name "r")
+		 (run-commands dir))
+	       (when (clon:getopt :short-name "p")
+		 (publish-site dir)
+		 (sb-ext:exit))
 	       (if-let ((port (clon:getopt :short-name "s")))
 		 (run-test-server dir port) 
 		 (generate-site dir))))

@@ -1,5 +1,7 @@
 (in-package :site-generator)
 ;;;; ## Site publishing
+(export '(publish-site))
+
 (defun publish-site (dir)
   "Pathspec -> nil"
   (generate-site dir)

@@ -146,4 +146,10 @@
   (is (local-time:timestamp=
        (local-time:encode-timestamp 0 0 0 12 23 4 2013)
        (sg::make-time '(:day 23 :hour 12 :minute 0)
-		      (local-time:encode-timestamp 0 0 1 6 2 4 2013)))))
+		      (local-time:encode-timestamp 0 0 1 6 2 4 2013))))
+  (is (equal '("Foo bar baz" "mu fu shu ich ni san quox quof quafe" "blub blu blub")
+	     (sg::escaped-lines "Foo bar baz
+mu fu shu\\
+ich ni san\\
+quox quof quafe
+blub blu blub"))))
