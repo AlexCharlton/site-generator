@@ -14,7 +14,9 @@
    bound?
    other-languages))
 
-(defvar *version* "0.1.0")
+(defconstant +version-major+ 0)
+(defconstant +version-minor+ 1)
+(defconstant +version-release+ 0)
 
 ;;;; ## Primary interface
 (defvar *root-dir*)
@@ -460,7 +462,8 @@ Entry point. Perform the relevant action based on the command line options."
 		  (clon:help)
 		  (quit))
 		 ((clon:getopt :short-name "v")
-		  (format t "site-generator version ~a~%" *version*)
+		  (format t "site-generator version ~a.~a-~a~%"
+			  +version-major+ +version-minor+ +version-release+)
 		  (quit))
 		 ((clon:getopt :short-name "i")
 		  (init-site dir)
