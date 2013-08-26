@@ -1,6 +1,11 @@
 (in-package :site-generator)
 ;;;; ## Utility functions
-(export '(html))
+(export '(html
+	  lines
+	  words
+	  first-line
+	  trim
+	  join-strings))
 
 ;;;; ### Files and directories
 (defun touch-file (file)
