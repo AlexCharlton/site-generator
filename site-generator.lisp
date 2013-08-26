@@ -288,10 +288,11 @@ Recurs depth first through a directory tree, deleting all directories that do no
   (iter (for file in (list-directory dir :follow-symlinks nil))
 	(when (directory-pathname-p file)
 	  (remove-empty-directories file)))
-  (unless (or (directory-pathname-p dir)
-	      (list-directory dir))
-    (print-message "Removing unused directory: ~a" (directory-minus dir *site-dir*))
-    (delete-directory-and-files dir)))
+  (handler-case (unless (list-directory dir)
+		  (osicat:delete-directory dir)
+		  (print-message "Removing unused directory: ~a"
+				 (directory-minus dir *site-dir*)))
+    (osicat-posix:enotdir () nil)))
 
 (defun get-file-slugs (content-file)
   "Pathname -> Plist
