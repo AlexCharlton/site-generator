@@ -10,9 +10,9 @@
    init-site
    run-commands
    include
-   echo
-   bound?
-   other-languages))
+   other-languages
+   get-content
+   get-pages))
 
 (defconstant +version-major+ 0)
 (defconstant +version-minor+ 1)
@@ -220,7 +220,7 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 	       :title (getf *environment* :title)
 	       :template template
 	       :configs configs
-	       :pages (get-pages file (add-slugs (get-file-slugs file) dir-slugs))
+	       :pages (get-page-paths file (add-slugs (get-file-slugs file) dir-slugs))
 	       :old-pages (when entry
 			    (content-entry-old-pages entry))))))))
 
@@ -320,7 +320,7 @@ Return a Plist of appropriate directory slugs, one for each language. The :DIREC
 			 (first (getf (getf env :directory-slug) lang))
 			 (parent-directory relative-dir))))))))
 
-(defun get-pages (file slugs)
+(defun get-page-paths (file slugs)
   "Pathname Plist -> Plist
 Return a plist of the relative paths of the pages for FILE, given its SLUGS. This depends upon :PAGES-AS-DIRECTORIES."
   (iter (for lang in (getf *environment* :languages))
@@ -489,8 +489,9 @@ Return the path refereed to by the remainder of the command line options. If no 
 	(merge-pathnames dir))))
     *default-pathname-defaults*))
 
+
 ;;;; ## Accessors
-;;;; Accessors is the loose term for the functions that are called from templates in order to access information about the pages of a site.
+;;;; Accessors is the term used for the functions that are called in order to access information about the pages of a site.
 (defun include (template-name)
   "String -> String
 Treat the string as a path to a template in *TEMPLATE-DIR* and return the contents of that file."
@@ -499,17 +500,6 @@ Treat the string as a path to a template in *TEMPLATE-DIR* and return the conten
       (iter (for line = (read-line in nil 'eof))
 	    (until (eq line 'eof))
 	    (write-line line out)))))
-
-(defun echo (&rest strings)
-  "&rest Strings -> String
-Concatenate the strings"
-  (apply #'join-strings "" strings))
-
-(defmacro bound? (symbol)
-  "Symbol -> Boolean
-Return value of SYMBOL if bound, silencing UNBOUND-VARIABLE errors."
-  `(handler-case (symbol-value ',symbol)
-     (unbound-variable () nil)))
 
 (defmacro def-page-accessor (name entry-accessor value-var
 			     (path lang &rest more-keys) &body body)
@@ -575,3 +565,37 @@ Return an html list of links to the current page in all languagse"
 		     (htm (:li :class selected-class (str lang)))
 		     (htm (:li (:a :href (page-address page :lang lang)
 				      (str lang))))))))))
+
+(defun get-content (page name)
+  "String Keyword -> (values X Keyword Plist)
+Return the raw content of the variable NAME from PAGE. The :lang from the calling *ENVIRONMENT* is used."
+  (let ((*environment* (merge-environments
+			(list :lang (getf *environment* :lang)
+			      :default-language (getf *environment* :default-language))
+			(parse-content (merge-pathnames page *content-dir*)))))
+    (get-data name)))
+
+(defun get-sorted-pages (directory order)
+  "String :ascending|:descending -> (String)
+Return the list of page paths of pages in DIRECTORY from the *DB*, sorted by date in ORDER."
+  (let ((regex (create-scanner (format nil "^~a" (pathname-as-directory directory))))
+	(time-sort (ecase order
+		     (:ascending #'timestamp<)
+		     (:descending #'timestamp>))))
+    (mapcar #'car
+	    (sort (iter (for (path entry) in-hashtable *db*)
+			(when (and (eq (type-of entry) 'content-entry)
+				   (scan regex (namestring path)))
+			  (collect (cons (namestring path) entry))))
+		  (lambda (a b) (funcall time-sort
+					 (content-entry-date (cdr a))
+					 (content-entry-date (cdr b))))))))
+
+(defun get-pages (directory &key number (start 0) (order :descending))
+  "String &key (number Integer) (start Integer) (order :descending|:ascending)
+Get the date sorted pages from DIRECTORY, sorted in ORDER. START specifies an offset into the full list of pages which defaults to zero (no offset). At most NUMBER pages are returned, or all remaining pages after START, if no NUMBER."
+  (let ((pages (get-sorted-pages directory order)))
+    (subseq pages start
+	    (when (and (integerp number)
+		       (<= (+ start number) (length pages)))
+	      (+ start number)))))

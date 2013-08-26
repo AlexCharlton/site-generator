@@ -5,7 +5,9 @@
 	  words
 	  first-line
 	  trim
-	  join-strings))
+	  join-strings
+	  echo
+	  bound?))
 
 ;;;; ### Files and directories
 (defun touch-file (file)
@@ -77,6 +79,7 @@ Modified from http://files.b9.com/lboot/utils.lisp"
 	(setq dir (parse-namestring dir)))
       dir))))
 
+
 ;;;; ### Strings and characters
 (defun words (string)
   "String -> (String)
@@ -102,6 +105,11 @@ Concatenates a list of strings and puts SEPARATOR between the elements."
 Remove whitespace at the beginning and end of a string."
   (string-trim '(#\Space #\Newline #\Tab) string))
 
+(defun echo (&rest strings)
+  "&rest Strings -> String
+Concatenate the strings"
+  (apply #'join-strings "" strings))
+
 (defun split-comma-or-space-separated (words)
   (split "\\s*,\\s+|\\s*,|\\s+" words))
 
@@ -116,6 +124,7 @@ Return true if CHAR is a whitespace character."
 Returns the list of strings seperated by lines as per LINES, but backslashes at the end of lines escape the new line"
   (lines (regex-replace-all "\\\\\\n" string " ")))
 
+
 ;;;; ### Keywords
 (defun string->keyword (s)
   (intern (string-upcase s) :keyword))
@@ -126,6 +135,7 @@ Returns keywords from comma or space separated string"
   (mapcar #'string->keyword
 	  (split-comma-or-space-separated string)))
 
+
 ;;; ### Lists
 (defun times (n elt)
   "Natural X -> (X)
@@ -133,12 +143,14 @@ Return a list of n ELTs."
   (iter (for x from 0 below n)
 	(collect elt)))
 
+
 ;;; ### Plists
 (defun merge-plists (plist-new plist-base)
   (let ((base (copy-list plist-base)))
     (iter (for (k v) on plist-new by #'cddr)
 	  (setf (getf base k) v))
     base))
+
 
 ;;; ### Time
 (defun make-time (element-list fallback)
@@ -172,12 +184,21 @@ Break a string by spaces and equals signs and return a plist of the unit value p
 	    (error "Improper date entered: ~s" s))
 	  (collect unit) (collect val))))
 
+
 ;;;; ### HTML
 (defmacro html (&body body)
   `(with-html-output-to-string (,(gensym) nil
 				 :prologue ,(eq (caar body) :html)
 				 :indent t)
      ,@body))
+
+
+;;;; ### Symbols
+(defmacro bound? (symbol)
+  "Symbol -> Boolean
+Return value of SYMBOL if bound, silencing UNBOUND-VARIABLE errors."
+  `(handler-case (symbol-value ',symbol)
+     (unbound-variable () nil)))
 
 
 ;;;; ### System
