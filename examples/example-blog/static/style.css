@@ -1,0 +1,17 @@
+article {
+    margin: 0px auto;
+    width: 500px;
+}
+
+.next {
+    float: right;
+}
+
+nav ul {
+    list-style-type: none;
+}
+
+nav li {
+    padding: 0 10px;
+    display: inline;
+}

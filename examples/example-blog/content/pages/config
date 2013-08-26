@@ -6,9 +6,9 @@ $(html (:article (:h2 (str title))
              (:div :class "author" (str author))
 	     (:div :class "date" (str (page-date :current))))
 	   (str (content))
-	   (:div :class "prev"
+	   (:span :class "prev"
 	         (let ((prev (prev-page "pages")))
 		   (when prev (htm (:a :href (page-address prev) "Previous post")))))
- 	   (:div :class "next"
+ 	   (:span :class "next"
 	         (let ((next (next-page "pages")))
 		   (when next (htm (:a :href (page-address next) "Next post")))))))
