@@ -12,7 +12,9 @@
    include
    other-languages
    get-content
-   get-pages))
+   get-pages
+   next-page
+   prev-page))
 
 (defconstant +version-major+ 0)
 (defconstant +version-minor+ 1)
@@ -599,3 +601,23 @@ Get the date sorted pages from DIRECTORY, sorted in ORDER. START specifies an of
 	    (when (and (integerp number)
 		       (<= (+ start number) (length pages)))
 	      (+ start number)))))
+
+(defun next-page (directory &optional page)
+  "String String -> String OR Nil
+Return the page in DIRECTORY chronologically next from PAGE."
+  (let* ((pages (get-sorted-pages directory :ascending))
+	 (page (or page (get-data :current-file)))
+	 (position (position page pages :test #'equal)))
+    (when (and position
+	       (< (1+ position) (length pages)))
+      (elt pages (1+ position)))))
+
+(defun prev-page (directory &optional page)
+  "String String -> String OR Nil
+Return the page in DIRECTORY chronologically previous to PAGE."
+  (let* ((pages (get-sorted-pages directory :ascending))
+	 (page (or page (get-data :current-file)))
+	 (position (position page pages :test #'equal)))
+    (when (and position
+	       (plusp position ))
+      (elt pages (1- position)))))
