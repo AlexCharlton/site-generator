@@ -11,7 +11,12 @@
     (unless server
       (error "No server specified in the top-level config file."))
     (asdf/interface::run-program  (join-strings " " "rsync"
-						"-CvaLz --copy-unsafe-links --del"
+						"--cvs-exclude"
+						"--verbose"
+						"--archive"
+						"--compress"
+						"--copy-unsafe-links"
+						"--del"
 						(namestring *site-dir*)
 						server)
 				  :output :interactive)))
