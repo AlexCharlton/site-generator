@@ -30,6 +30,9 @@
 (defvar *DB*)
 (defvar *DB-file*)
 
+(defvar *dependants* nil
+  "Entries which depend on others.")
+
 (defstruct content-entry
   "An record of a content file of the information that is used for generating the site and that should be known between other files. Stored in *DB*."
   needs-update
@@ -107,8 +110,10 @@ Determine if a *ROOT-DIR* is a site-generator directory."
     (error "Not a site-generator directory: ~a" *root-dir*)))
 
 (defun update-db ()
-  (setf (gethash :templates *db*) (walk-templates))
-  (walk-site *content-dir* nil nil))
+  (setf (gethash :templates *db*) (walk-templates)
+	*dependants* nil)
+  (walk-site *content-dir* nil nil)
+  (resolve-dependancies))
 
 (defun walk-site (dir configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
@@ -207,28 +212,30 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 	    (iter (for (lang content) on (getf *environment* name) by #'cddr)
 		  (collect lang)
 		  (collect (first content))))))
-    (when (or (not entry)
-	      (> (file-write-date file) (content-entry-last-modified entry))
-	      (not (equal configs (content-entry-configs entry)))
-	      (not (equal template (content-entry-template entry))))
-      (let ((creation-date (if entry
-			       (content-entry-creation-date entry)
-			       (universal-to-timestamp (file-write-date file)))))
-	(setf (gethash relative-path *db*)
-	      (make-content-entry
-	       :needs-update t
-	       :last-modified (file-write-date file)
-	       :creation-date creation-date
-	       :date (if-let ((date (get-data :date)))
-		       (make-time date creation-date)
-		       creation-date)
-	       :author (get-values :author)
-	       :title (get-values :title)
-	       :template template
-	       :configs configs
-	       :pages (get-page-paths file (add-slugs (get-file-slugs file) dir-slugs))
-	       :old-pages (when entry
-			    (content-entry-old-pages entry))))))))
+    (if (or (not entry)
+	    (> (file-write-date file) (content-entry-last-modified entry))
+	    (not (equal configs (content-entry-configs entry)))
+	    (not (equal template (content-entry-template entry))))
+	(let ((creation-date (if entry
+				 (content-entry-creation-date entry)
+				 (universal-to-timestamp (file-write-date file)))))
+	  (setf (gethash relative-path *db*)
+		(make-content-entry
+		 :needs-update t
+		 :last-modified (file-write-date file)
+		 :creation-date creation-date
+		 :date (if-let ((date (get-data :date)))
+			 (make-time date creation-date)
+			 creation-date)
+		 :author (get-values :author)
+		 :title (get-values :title)
+		 :template template
+		 :configs configs
+		 :pages (get-page-paths file (add-slugs (get-file-slugs file) dir-slugs))
+		 :old-pages (when entry
+			      (content-entry-old-pages entry)))))
+	(when-let ((dependancies (get-data :depends)))
+	  (push (cons entry dependancies) *dependants*)))))
 
 (defun needs-update ()
   "nil -> ((Pathname Entry (Pathname)))
@@ -237,6 +244,20 @@ Return a list of all the (file entry (configs)) pairs from the *DB* that need up
 	(when (and (eq (type-of entry) 'content-entry)
 		   (content-entry-needs-update entry))
 	  (collect (list path entry (mapcar #'first (content-entry-configs entry)))))))
+
+(defun resolve-dependancies ()
+  (let+ ((paths (iter (for (path entry) in-hashtable *db*)
+		      (when (eq (type-of entry) 'content-entry)
+			(collect (cons (namestring path) entry)))))
+	 ((&flet dependancy-changed-p (dependancies)
+	    (iter (for dependancy in dependancies)
+		  (iter (for (path . entry) in paths)
+			(when (and (equal (search dependancy path) 0)
+				   (content-entry-needs-update entry))
+			  (return-from dependancy-changed-p t)))))))
+    (iter (for (entry . dependancies) in *dependants*)
+	  (when (dependancy-changed-p dependancies)
+	    (setf (content-entry-needs-update entry) t)))))
 
 (defun generate-page (file entry)
   "Pathname Entry -> nil

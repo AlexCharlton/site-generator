@@ -3,3 +3,6 @@ xml
 
 :template
 rss.lisp
+
+:depends
+pages/

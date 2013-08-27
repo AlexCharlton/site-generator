@@ -17,3 +17,6 @@ $(html
 	           (:p (str (first-line (get-content page :content)))
 		   (:p (:a :href (page-address page)
 		       	   "Keep reading...")))))))
+
+:depends
+pages/

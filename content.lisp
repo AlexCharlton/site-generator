@@ -62,6 +62,7 @@
 			  (lines x)))
     :server ,#'first-line
     :extension ,#'(lambda (x) (first (words x)))
+    :depends ,#'lines
     :pre-publish ,#'identity
     :cl-environment ,#'identity
     :commands ,#'escaped-lines
