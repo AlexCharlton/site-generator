@@ -62,7 +62,7 @@
 			  (lines x)))
     :server ,#'first-line
     :extension ,#'(lambda (x) (first (words x)))
-    :depends ,#'lines
+    :depends ,#'(lambda (x) (mapcar #'trim (lines x)))
     :pre-publish ,#'identity
     :cl-environment ,#'identity
     :commands ,#'escaped-lines
