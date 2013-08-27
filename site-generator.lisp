@@ -526,11 +526,7 @@ Return the path refereed to by the remainder of the command line options. If no 
 (defun include (template-name)
   "String -> String
 Treat the string as a path to a template in *TEMPLATE-DIR* and return the contents of that file."
-  (with-output-to-string (out)
-    (with-open-file (in (merge-pathnames template-name *template-dir*))
-      (iter (for line = (read-line in nil 'eof))
-	    (until (eq line 'eof))
-	    (write-line line out)))))
+  (read-file-into-string (merge-pathnames template-name *template-dir*)))
 
 (defmacro def-page-accessor (name entry-accessor value-var
 			     (path lang &rest more-keys) &body body)
