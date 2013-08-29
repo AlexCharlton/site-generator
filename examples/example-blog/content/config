@@ -5,7 +5,7 @@ Example Blog
 main.html
 
 :nav
-$(html (:nav
+$(xml (:nav
          (:ul 
            (:li (:a :href (page-address "index") "Home"))
            (:li (:a :href (page-address "archive") "Archives")))))

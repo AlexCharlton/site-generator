@@ -425,7 +425,7 @@ Print the contents of *DB* into *DB-FILE*, as a Plist."
     (prin1 (hash-table-plist *db*) s)))
 
 (defvar *top-level-config-vars*
-    '(:languages :default-language :use :pages-as-directories :server :commands)
+    '(:languages :default-language :pages-as-directories :server :commands)
   "Variables that may only be defined in the top-level config file.")
 
 (defun parse-config (config-file)
@@ -459,18 +459,20 @@ Parse a page content file using PARSE-CONTENT and throw errors if any settings a
 
 ;;;; ## Command line interface
 (clon:defsynopsis (:postfix "DIRECTORY")
-  (text :contents "site-generator is a static site generator. When called with no arguments, site-generator will generate the site-generator site that resides at DIRECTORY.")
+  (text :contents "site-generator is a static site generator. When called with no options, site-generator will generate the site-generator site that resides at DIRECTORY. When DIRECTORY is omitted, the path from which site-generator was called will be used.
+
+For more information, visit http://alex-charlton.com/site-generator")
   (flag :short-name "i" :long-name "init"
 	:description "Initialize a site-generator directory.")
   (flag :short-name "p" :long-name "publish"
-	:description "Generate the site and publish it to the server specified in the top-level config file.")
+	:description "Generate the site and publish it to the 'server' specified in the top-level config file.")
   (lispobj :short-name "s" :long-name "test-server"
 	   :argument-type :optional
 	   :description "Lanch a test server for a site-generator site, updating the pages when files are changed on disk. Optionally accepts a value for the port on which the server listens."
 	   :fallback-value 4242
 	   :argument-name "PORT")
   (flag :short-name "r" :long-name "run-commands"
-	:description "Before generating the site, run any commands that are set in the top-level config file.")
+	:description "Before generating the site, run any 'commands' that are set in the top-level config file.")
   (flag :short-name "q" :long-name "quiet"
 	:description "Silence output.")
   (flag :short-name "h" :long-name "help"
@@ -493,8 +495,7 @@ Entry point. Perform the relevant action based on the command line options."
 		  (clon:help)
 		  (quit))
 		 ((clon:getopt :short-name "v")
-		  (format t "site-generator version ~a.~a-~a~%"
-			  +version-major+ +version-minor+ +version-release+)
+		  (version)
 		  (quit))
 		 ((clon:getopt :short-name "i")
 		  (init-site dir)
@@ -520,6 +521,9 @@ Return the path refereed to by the remainder of the command line options. If no 
 	(merge-pathnames dir))))
     *default-pathname-defaults*))
 
+(defun version ()
+  (format t "site-generator version ~a.~a-~a~%"
+			  +version-major+ +version-minor+ +version-release+))
 
 ;;;; ## Accessors
 ;;;; Accessors is the term used for the functions that are called in order to access information about the pages of a site.

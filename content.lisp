@@ -36,7 +36,6 @@
     :output-format :html5
     :markup :none
     :smart :true
-    :toc :false
     :highlight :true
     :use (:cl :site-generator :cl-who))
   "The default environment.")
@@ -64,7 +63,6 @@
     :server ,#'first-line
     :extension ,#'(lambda (x) (first (words x)))
     :depends ,#'(lambda (x) (mapcar #'trim (lines x)))
-    :pre-publish ,#'identity
     :cl-environment ,#'identity
     :commands ,#'escaped-lines
     :date ,#'parse-date

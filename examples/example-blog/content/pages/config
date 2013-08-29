@@ -12,3 +12,6 @@ $(xml (:article (:h2 (str title))
  	   (:span :class "next"
 	         (let ((next (next-page "pages")))
 		   (when next (htm (:a :href (page-address next) "Next post")))))))
+
+:author
+Alex

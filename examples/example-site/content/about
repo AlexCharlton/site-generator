@@ -1,11 +1,11 @@
-:template
-other.html
-
-:title lang=en
+:title
 About site-generator
 
 :title lang=fr
 À propos de site-generator
+
+:template
+other.html
 
 :slug lang=fr
 A_propos
