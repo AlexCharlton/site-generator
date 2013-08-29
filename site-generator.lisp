@@ -585,7 +585,7 @@ Return the root relative address of the page denoted by PATH in the appropriate 
   "String &key (ul-class String) (selected-class String) -> String
 Return an html list of links to the current page in all languagse"
   (let ((page (get-data :current-file)))
-    (html
+    (xml
       (:ul :class ul-class
 	   (loop for lang in (get-data :languages)
 	      do (if (eq lang (get-data :lang))

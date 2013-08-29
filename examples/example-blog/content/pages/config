@@ -1,7 +1,7 @@
 :contents
-$(html (:header (:h1 (str site-name))))
+$(xml (:header (:h1 (str site-name))))
 $nav$
-$(html (:article (:h2 (str title))
+$(xml (:article (:h2 (str title))
            (:div :class "article-info" 
              (:div :class "author" (str author))
 	     (:div :class "date" (str (page-date :current))))

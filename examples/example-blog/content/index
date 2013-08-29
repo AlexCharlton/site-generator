@@ -1,5 +1,5 @@
 :contents
-$(html (:header (:h1 (str site-name))))
+$(xml (:header (:h1 (str site-name))))
 $nav$
 $content$
 

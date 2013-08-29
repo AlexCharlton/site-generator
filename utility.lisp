@@ -1,7 +1,6 @@
 (in-package :site-generator)
 ;;;; ## Utility functions
-(export '(html
-	  rss
+(export '(xml
 	  lines
 	  words
 	  first-line
@@ -190,18 +189,13 @@ Return the RFC formated time corresponding to when the function is called."
   (format-timestring nil (now) :format +rfc+))
 
 ;;;; ### XML
-(defmacro html (&body body)
+(defmacro xml (&body body)
   `(with-html-output-to-string
        (,(gensym) nil
-	 :prologue ,(eq (caar body) :html)
-	 :indent t)
-     ,@body))
-
-(defmacro rss (&body body)
-  `(with-html-output-to-string
-       (,(gensym) nil
-	 :prologue ,(when (eq (caar body) :rss)
-			  "<?xml version='1.0' encoding='utf-8'?>")
+	 :prologue ,(case (caar body)
+			  (:html t)
+			  (:rss "<?xml version='1.0' encoding='utf-8'?>")
+			  (otherwise nil))
 	 :indent t)
      ,@body))
 

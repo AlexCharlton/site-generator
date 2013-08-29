@@ -1,4 +1,4 @@
-$(rss (:rss :version "2.0"
+$(xml (:rss :version "2.0"
 	    (:channel 
 	     (:title "Example Blog")
 	     (:link "http://example-blog-url.com/")
@@ -12,6 +12,6 @@ $(rss (:rss :version "2.0"
 			 (:guid (str (page-address page)))
 			 (:pubDate (str (page-date page :format +rfc+)))
 			 (:description "<![CDATA[ "
-				      (str (markup (get-content page :content)
-						   :markup :markdown))
+				       (str (markup (get-content page :content)
+						    :markup :markdown))
 				      " ]]>")))))))
