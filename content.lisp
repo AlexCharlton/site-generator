@@ -55,6 +55,7 @@
     :highlight ,#'string->keyword
     :highlight-style ,#'string->keyword
     :math ,#'string->keyword
+    :number-sections ,#'string->keyword
     :default ,#'(lambda (x)
 		  (mapcan (lambda (line)
 	   		    (let+ (((var &rest args) (is-variable? line)))
@@ -228,13 +229,14 @@ Break a string by spaces and equals signs and return a list of the resulting str
 ;;; ### Mark up content
 (defvar *pandoc-supported-args*
   `(:output-format ,(lambda (x) (format nil "--to=~(~a~)" x))
-		   :markup ,(lambda (x) (format nil "--from=~(~a~)" x))
-		   :smart ,(lambda (x) (when (eq x :true) "--smart"))
+    :markup ,(lambda (x) (format nil "--from=~(~a~)" x))
+    :smart ,(lambda (x) (when (eq x :true) "--smart"))
     :toc ,(lambda (x) (when (eq x :true) "--toc"))
     :toc-depth ,(lambda (x) (format nil "--toc-depth=~(~a~)" x))
     :highlight ,(lambda (x) (when (not (eq x :true)) "--no-highlight"))
     :highlight-style ,(lambda (x) (format nil "--highlight-style=~(~a~)" x))
-    :math ,(lambda (x) (when (eq x :true) "--mathjax")))
+    :math ,(lambda (x) (when (eq x :true) "--mathjax"))
+    :number-sections ,(lambda (x) (when (eq x :true) "--number-sections")))
   "Maps the arguments supported by site-generator to the string arguments supported by pandoc.")
 
 (defun generate-pandoc-args (args)
