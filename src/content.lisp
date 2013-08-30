@@ -248,16 +248,93 @@ Turn a Plist of arguments and *ENVIRONMENT* into a string understood by pandoc. 
   "String &optional (Plist) -> String
 Pass the given STRING and ARGS through pandoc given *ENVIRONMENT*.
 
-Spawning a new pandoc process is slow, so this is not the prefered way of doing it."
+When :TOC is set, call GET-PANDOC-TOC and replace any strings of {{{toc}}} (that aren't preceded by <code> tags) that appear in the text, with the results. Also set 'TOC."
   (with-open-temporary-file (s :direction :output)
     (iter (for char in-string string)
 	  (write-char char s))
-    (file-position s 0)
-    (trim (asdf/interface::run-program 
-	   (join-strings " " "pandoc"
-			 (generate-pandoc-args args)
-			 (namestring (pathname s)))
-	   :output :string))))
+    (let ((toc (when (or (getf args :toc)
+			 (getf *environment* :doc))
+		 (get-pandoc-toc s args)))
+	  (output (progn
+		    (file-position s 0)
+		    (trim (asdf/interface::run-program 
+			   (join-strings " " "pandoc"
+					 (generate-pandoc-args args)
+					 (namestring (pathname s)))
+			   :output :string)))))
+      (if toc
+	  (progn
+	    (setf (symbol-value (intern "toc" *package*)) toc)
+	    (regex-replace-all
+	    "<p>\\{\\{\\{toc\\}\\}\\}</p>|(?<!<code>)\\{\\{\\{toc\\}\\}\\}"
+	    output
+	    toc))
+	  output))))
+
+#+sbcl
+(defun get-pandoc-toc (file-stream args)
+  "Pass the file through Pandoc with a special table-of-contents-only template in order to determine the table of contents.
+
+If the template doesn't exist, create it."
+  (let+ (((&flet create-toc-template (dir)
+	    (print-message "No Pandoc toc template. Creating at ~a (root permission may be necessary)" dir)
+	    (with-open-file (s (merge-pathnames "toc.html" dir)
+			       :direction :output :if-exists :supersede)
+	      (write-line "$toc$" s))
+	    (with-open-file (s (merge-pathnames "toc.html5" dir)
+			       :direction :output :if-exists :supersede)
+	      (write-line "$toc$" s)))))
+    (file-position file-stream 0)
+    (let ((toc (let ((proc (sb-ext:run-program
+			    "pandoc"
+			    (concatenate 'list 
+					 (words (generate-pandoc-args args))
+					 (list "--standalone"
+					       "--template=toc"
+					       (namestring (pathname file-stream))))
+			    :output :stream :search t)))
+		 (with-output-to-string (out)
+		   (iter (for line = (read-line (sb-ext:process-output proc)
+						nil 'eof))
+			 (until (eq line 'eof))
+			 (princ line out))
+		   (sb-ext:process-close proc)))))
+      (if (register-groups-bind (dir)
+	      ("^pandoc: (.+)toc.html5?" toc)
+	    (create-toc-template dir))
+	  (error "Fuuuuuu")
+	  ;(get-pandoc-toc file-stream args)
+	  toc))))
+
+#-sbcl
+(defun get-pandoc-toc (file-stream args)
+  "Pass the file through Pandoc with a special table-of-contents-only template in order to determine the table of contents.
+
+If the template doesn't exist, create it. This function must prompt for the path to the template directory, so it is not the prefered method."
+
+  (let+ (((&flet create-toc-template ()
+	    (format t "Pandoc does not have a toc template.~%Please enter the location of the Pandoc template directory (blank line cancels):~%")
+	    (let ((dir (read-line)))
+	      (unless (string= dir "")
+		(with-open-file (s (merge-pathnames "toc.html"
+						    (pathname-as-directory dir))
+				   :direction :output :if-exists :supersede)
+		  (write-line "$toc$" s))
+		(with-open-file (s (merge-pathnames "toc.html5"
+						    (pathname-as-directory dir))
+				   :direction :output :if-exists :supersede)
+		  (write-line "$toc$" s))
+		(get-pandoc-toc file-stream args))))))
+    (file-position file-stream 0)
+    (handler-case
+	(asdf/interface::run-program 
+	 (join-strings " " "pandoc"
+		       "--standalone"
+		       "--template=toc"
+		       (generate-pandoc-args args)
+		       (namestring (pathname file-stream)))
+	 :output :string)
+    (asdf/run-program:subprocess-error () (create-toc-template)))))
 
 (defun markup (content &rest args)
   "String &rest (Key Value) -> String
