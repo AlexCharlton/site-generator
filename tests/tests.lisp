@@ -135,7 +135,7 @@
 		((#P"main.html" . 3585328208) (#P"footer.html" . 3585328073)
 		 (#P"other.html" . 3585327838)(#P"header.html" . 3586212646))
 		((#P"other.html" . 3585327838)))
-	     (sg::resolve-template-dependancies
+	     (sg::resolve-template-dependencies
 	      '(((#P"footer.html" . 3585328073) (#P"other.html" . 3585327838))
 		((#P"header.html" . 3586212646))
 		((#P"main.html" . 3585328208) (#P"footer.html" . 3585328073)
