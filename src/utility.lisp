@@ -7,6 +7,7 @@
 	  trim
 	  join-strings
 	  echo
+	  escape-dollars
 	  bound?
 	  +rfc+
 	  build-time))
@@ -121,6 +122,11 @@ Return true if CHAR is a whitespace character."
 Returns the list of strings seperated by lines as per LINES, but backslashes at the end of lines escape the new line"
   (lines (regex-replace-all "\\\\\\n" string " ")))
 
+(defun escape-dollars (string)
+  "Replace any dollar signs with their escaped equivalent. Also escapes escaped dollar signgs. Does not go any deeper down the rabbit hole."
+  (regex-replace-all "(?<!\\\\)\\$"
+		     (regex-replace-all "\\\\\\$" string "\\\\\\\\\\$")
+		     "\\$"))
 
 ;;;; ### Keywords
 (defun string->keyword (s)
