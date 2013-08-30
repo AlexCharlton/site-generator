@@ -324,6 +324,7 @@ Return a Plist of appropriate file slugs, one for each language. The :SLUG prope
 	  (let ((slug (get-data :slug lang))
 		(title (get-data :title lang)))
 	    (collect (slugify (cond
+				((string= name "index") name)
 				((and slug (string/= slug ""))
 				 slug)
 				((and title (string/= title ""))
