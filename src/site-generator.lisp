@@ -1,9 +1,12 @@
 (in-package :site-generator)
+
 (eval-when (:execute :load-toplevel :compile-toplevel)
-  (com.dvlsoft.clon:nickname-package)
-  (enable-read-macros))
+  (com.dvlsoft.clon:nickname-package) ; Create CLON nickname
+  (enable-read-macros)) ; For local-time
+
 (setf (html-mode) :html5
-      *html-no-indent-tags* '(:pre :textarea :b :a :li :title :link :lastbuilddate :pubdate :guid))
+      *html-no-indent-tags* '(:pre :textarea :b :a :li :title :link :lastbuilddate :pubdate :guid)) ; CL-WHO settings
+
 ;;;; # Site Generator
 (export
  '(generate-site
@@ -21,17 +24,20 @@
 (defconstant +version-release+ 0)
 
 ;;;; ## Primary interface
+;; Directories site-generator expects
 (defvar *root-dir*)
 (defvar *content-dir*)
 (defvar *site-dir*)
 (defvar *template-dir*)
 (defvar *static-dir*)
 
-(defvar *DB*)
-(defvar *DB-file*)
+(defvar *DB* nil "A hashtable that holds pertinent information regarding a site.")
+(defvar *DB-file* nil "The file in which *DB* is stored, as a plist.")
 
 (defvar *dependants* nil
-  "Entries which depend on others.")
+  "A list of (Entry . Paths) denoting entries that depend on the files in the paths.")
+(defvar *templates* nil
+  "A list of templates path and write-date dependancy lists, as returned by WALK-TEMPLATES.")
 
 (defstruct content-entry
   "An record of a content file of the information that is used for generating the site and that should be known between other files. Stored in *DB*."
@@ -56,7 +62,7 @@ Used to print an informative message regarding the status of site generation, re
 
 (defun generate-site (dir)
   "Pathname -> nil
-After updating the database, generate the pages for every content file that needs updating."
+After updating the database, generate the site's pages for every content file that needs updating."
   (set-root-dir dir)
   (check-site)
   (print-message "Generating site...")
@@ -67,8 +73,7 @@ After updating the database, generate the pages for every content file that need
 
 (defun init-site (dir)
   "Pathspec -> nil
-Initialize the directory structure of a site.
-TODO?: Add keyword arguments to be inserted into config file"
+Initialize the directory structure of a site."
   (set-root-dir dir)
   (print-message "Initializing site-generator site at ~a" dir)
   (ensure-directories-exist *root-dir*)
@@ -79,7 +84,7 @@ TODO?: Add keyword arguments to be inserted into config file"
 
 (defun run-commands (dir)
   "Pathname -> nil
-If there are any, run the command specified by the :commands variable in the top-level config file."
+If there are any, run the command specified by the :COMMANDS variable in the top-level config file."
   (set-root-dir dir)
   (check-site)
   (when-let ((commands (getf (parse-content (merge-pathnames "config" *content-dir*))
@@ -101,7 +106,7 @@ Set the root directory of the site, and all corresponding directories."
 
 (defun check-site ()
   "nil -> nil
-Determine if a *ROOT-DIR* is a site-generator directory."
+Determine if the *ROOT-DIR* is a site-generator directory."
   (unless (and (directory-exists-p *root-dir*)
 	       (directory-exists-p *content-dir*)
 	       (directory-exists-p *static-dir*)
@@ -110,10 +115,12 @@ Determine if a *ROOT-DIR* is a site-generator directory."
     (error "Not a site-generator directory: ~a" *root-dir*)))
 
 (defun update-db ()
-  (setf (gethash :templates *db*) (walk-templates)
+  "nil -> nil
+Perform the steps necessary to ensure that the database is up to date."
+  (setf *templates* (walk-templates)
 	*dependants* nil)
   (walk-site *content-dir* nil nil)
-  (resolve-dependancies))
+  (resolve-dependencies))
 
 (defun walk-site (dir configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
@@ -136,7 +143,7 @@ Recursively walk a site, tracking and parsing configs, working out slugs and cal
 
 (defun walk-templates ()
   "nil -> ({(Pathname . Integer)}+)
-Return the list of template pathnames consed to the templates they depend on where a dependancy is a (path . file-write-date) pair."
+Return the list of template pathnames consed to the templates they depend on where a dependency is a (path . file-write-date) pair."
   (let+ (templates
 	 ((&flet get-depends (path)
 	    (push (cons (cons (directory-minus path *template-dir*)
@@ -151,11 +158,11 @@ Return the list of template pathnames consed to the templates they depend on whe
 								    *template-dir*)))
 			    (cdr (first templates)))))))))
     (walk-directory *template-dir* #'get-depends :test (lambda (x) (not (hidden-p x))))
-    (resolve-template-dependancies (reverse templates))))
+    (resolve-template-dependencies (reverse templates))))
 
-(defun resolve-template-dependancies (templates)
+(defun resolve-template-dependencies (templates)
   "({(Pathname . Integer)}+) -> ({(Pathname . Integer)}+)
-Given a list of templates an their direct dependancies, return the list of templates with all dependancies."
+Given a list of templates and their direct dependencies, return the list of templates with all dependencies."
   (let+ (((&labels resolve-template (ts)
 	    (when ts
 	      (cons (first ts)
@@ -167,12 +174,12 @@ Given a list of templates an their direct dependancies, return the list of templ
 
 (defun get-template (path templates)
   "Pathspec ({(Pathname . Integer)}+) -> {(Pathname . Integer)}+
-"
+Return the template located at PATH from a list TEMPLATES that is comprised of (pathname file-write-date) pairs."
   (find (pathname path) templates :key #'caar :test #'equal))
 
 (defun update-site (needs-update)
   "((Pathname Entry (Pathname))) -> nil
-Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDATE), removing empty directories when done."
+Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDATE), removing empty directories, and writing the database to disk when done."
   (let+ ((configs (remove-duplicates (mapcar #'third needs-update)
 				     :test #'equal))
 	 ((&labels gen-site (configs configs-parsed)
@@ -201,13 +208,12 @@ Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDA
 
 (defun update-entry (file configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
-Update the *DB* ENTRY of FILE when the given content file is new or has been updated, one if the file's configs have been updated, or when the file's template has been updated."
+Update the *DB* ENTRY of FILE when the given content file is new or has been updated, or if the file's configs have been updated, or when the file's template has been updated."
   (let+ ((*environment* (merge-environments (parse-page file)
 					    *environment*))
 	 (relative-path (directory-minus file *content-dir*))
 	 (entry (gethash relative-path *db*))
-	 (template (get-template (get-data :template)
-				 (gethash :templates *db*)))
+	 (template (get-template (get-data :template) *templates*))
 	 ((&flet get-values (name)
 	    (iter (for (lang content) on (getf *environment* name) by #'cddr)
 		  (collect lang)
@@ -234,34 +240,34 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 		 :pages (get-page-paths file (add-slugs (get-file-slugs file) dir-slugs))
 		 :old-pages (when entry
 			      (content-entry-old-pages entry)))))
-	(when-let ((dependancies (get-data :depends)))
-	  (push (cons entry dependancies) *dependants*)))))
+	(when-let ((dependencies (get-data :depends)))
+	  (push (cons entry dependencies) *dependants*)))))
 
 (defun needs-update ()
   "nil -> ((Pathname Entry (Pathname)))
-Return a list of all the (file entry (configs)) pairs from the *DB* that need updating."
+Return a list of all the (file-path Entry (configs)) pairs from the *DB* that need updating."
   (iter (for (path entry) in-hashtable *db*)
-	(when (and (eq (type-of entry) 'content-entry)
-		   (content-entry-needs-update entry))
+	(when (content-entry-needs-update entry)
 	  (collect (list path entry (mapcar #'first (content-entry-configs entry)))))))
 
-(defun resolve-dependancies ()
+(defun resolve-dependencies ()
+  "nil -> nil
+For each Entry in *DEPENDANTS*, check if its dependants have changed and, if any have, and set their NEEDS-UPDATE to T."
   (let+ ((paths (iter (for (path entry) in-hashtable *db*)
-		      (when (eq (type-of entry) 'content-entry)
-			(collect (cons (namestring path) entry)))))
-	 ((&flet dependancy-changed-p (dependancies)
-	    (iter (for dependancy in dependancies)
+		      (collect (cons (namestring path) entry))))
+	 ((&flet dependency-changed-p (dependencies)
+	    (iter (for dependency in dependencies)
 		  (iter (for (path . entry) in paths)
-			(when (and (equal (search dependancy path) 0)
+			(when (and (equal (search dependency path) 0)
 				   (content-entry-needs-update entry))
-			  (return-from dependancy-changed-p t)))))))
-    (iter (for (entry . dependancies) in *dependants*)
-	  (when (dependancy-changed-p dependancies)
+			  (return-from dependency-changed-p t)))))))
+    (iter (for (entry . dependencies) in *dependants*)
+	  (when (dependency-changed-p dependencies)
 	    (setf (content-entry-needs-update entry) t)))))
 
 (defun generate-page (file entry)
   "Pathname Entry -> nil
-After deleting the old pages in the entry, parse the file and for each language, write the appropriate page. Update the entry to reflect this."
+After deleting the old pages in the Entry, parse the file and for each language, write the appropriate page. Update the entry to reflect this."
   (delete-old-pages entry)
   (let* ((*environment* (merge-environments
 			 (parse-page (merge-pathnames file *content-dir*))
@@ -317,7 +323,7 @@ Recurs depth first through a directory tree, deleting all directories that do no
 
 (defun get-file-slugs (content-file)
   "Pathname -> Plist
-Return a Plist of appropriate file slugs, one for each language. The :SLUG property is given precedence for the slug name, after which :TITLE is used, and the name of the file is the fallback."
+Return a Plist of appropriate file slugs, one for each language. The :SLUG property is given precedence for the slug name, after which :TITLE is used, and the name of the file is the fallback. Files named 'index' keep that name."
   (let ((name (pathname-name content-file)))
     (iter (for lang in (get-data :languages))
 	  (collect lang)
@@ -366,7 +372,7 @@ Return a plist of the relative paths of the pages for FILE, given its SLUGS. Thi
 
 (defun slugify (slug)
   "Pathspec -> String
-Given a pathspec, return a string that is a valid URI."
+Given a pathspec, return a string that is a valid URI. Subsitutes non-accented characters for accented ones, and replaces spaces with underscores."
   (let ((replace-list '(("\\s+" . "_")
 			("[‘’]" "'")
 			("[“”]" "\"")
@@ -462,7 +468,7 @@ Parse a page content file using PARSE-CONTENT and throw errors if any settings a
 (clon:defsynopsis (:postfix "DIRECTORY")
   (text :contents "site-generator is a static site generator. When called with no options, site-generator will generate the site-generator site that resides at DIRECTORY. When DIRECTORY is omitted, the path from which site-generator was called will be used.
 
-For more information, visit http://alex-charlton.com/site-generator")
+For more information, visit http://alex-charlton.com/projects/site-generator")
   (flag :short-name "i" :long-name "init"
 	:description "Initialize a site-generator directory.")
   (flag :short-name "p" :long-name "publish"
@@ -475,7 +481,7 @@ For more information, visit http://alex-charlton.com/site-generator")
   (flag :short-name "r" :long-name "run-commands"
 	:description "Before generating the site, run any 'commands' that are set in the top-level config file.")
   (flag :short-name "q" :long-name "quiet"
-	:description "Silence output.")
+	:description "Silence most output.")
   (flag :short-name "h" :long-name "help"
 	:description "Print this help and exit.")
   (flag :short-name "v" :long-name "version"
@@ -523,6 +529,8 @@ Return the path refereed to by the remainder of the command line options. If no 
     *default-pathname-defaults*))
 
 (defun version ()
+  "nil -> nil
+Print the verion string."
   (format t "site-generator version ~a.~a-~a~%"
 			  +version-major+ +version-minor+ +version-release+))
 
@@ -535,6 +543,7 @@ Treat the string as a path to a template in *TEMPLATE-DIR* and return the conten
 
 (defmacro def-page-accessor (name entry-accessor value-var
 			     (path lang &rest more-keys) &body body)
+  "Define and export the accessor NAME used to access the value of an Entry ENTRY-ACCESSOR, from the database."
   `(progn
      (defun ,name (,path &key ,lang ,@more-keys)
        ,(if (stringp (first body))
@@ -570,7 +579,8 @@ Return the root relative address of the page denoted by PATH in the appropriate 
 
 (def-page-accessor page-date content-entry-date date
     (path lang (format '(:long-month " " :ordinal-day ", " :year " " :hour ":" (:min 2) " " :timezone)))
-  "String &keys (lang Keyword) (format (Keyword or String or (Keyword Integer &optional Character))) -> String"
+  "String &keys (lang Keyword) (format (Keyword or String or (Keyword Integer &optional Character))) -> String
+Return the datestring formatted as per FORMAT (see local-time)."
   (format-timestring nil date :format format))
 
 (def-page-accessor page-title content-entry-title title (path lang)
@@ -588,7 +598,7 @@ Return the root relative address of the page denoted by PATH in the appropriate 
 
 (defun other-languages (&key (ul-class "languages") (selected-class "current-langage"))
   "String &key (ul-class String) (selected-class String) -> String
-Return an html list of links to the current page in all languagse"
+Return an HTML list of links to the current page in all languages."
   (let ((page (get-data :current-file)))
     (xml
       (:ul :class ul-class
@@ -616,8 +626,7 @@ Return the list of page paths of pages in DIRECTORY from the *DB*, sorted by dat
 		     (:descending #'timestamp>))))
     (mapcar #'car
 	    (sort (iter (for (path entry) in-hashtable *db*)
-			(when (and (eq (type-of entry) 'content-entry)
-				   (scan regex (namestring path)))
+			(when (and (scan regex (namestring path)))
 			  (collect (cons (namestring path) entry))))
 		  (lambda (a b) (funcall time-sort
 					 (content-entry-date (cdr a))

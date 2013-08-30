@@ -6,7 +6,8 @@
 (defvar *acceptor*)
 
 (defun run-test-server (dir &optional (port 4242))
-  "Pathname &optional Integer -> nil"
+  "Pathname &optional Integer -> nil
+Start a test server and watch the site for changes."
   (set-root-dir dir)
   (check-site)
   (init-db)
@@ -21,7 +22,8 @@
   (hunchentoot:stop *acceptor*))
 
 (defun watch-site ()
-  "nil -> nil"
+  "nil -> nil
+Watch the site for changes and update it when they occur."
   (print-message "Watching site for changes...")
   (iter (until *quit*)
 	(update-db)

@@ -748,12 +748,12 @@ pages/
 
 Modifying the file `example-blog/content/pages/first` will trigger the regeneration of `example-blog/site/First_Post!/index.html`, `example-blog/site/Archive/index.html`, and `example-blog/site/rss.xml`. This behaviour is critical for pages that should be updated whenever a particular set of content changes.
 
-site-generator makes it easy to pass small bits of text to Pandoc. Despite the amazing job that Pandoc does at markup, it has an appreciable start-up and shut-down time. These load times can really add up over the course of building a site. In order to keep generation fast, it's recommended that you don't get too carried away with marking things up. Using Pandoc to markup the navigation bars of your site (like we did in the *example site*) is a recipe for slow site generation. Save Pandoc for the real content of your site and, if you're averse to writing HTML, use the CL-WHO syntax for structural HTML generation.
-
 ### Using the test server
 When site-generator is run with the `--test-server` flag (`site-generator -s[PORT] [DIRECTORY]` or `site-generator --test-server=[PORT] [DIRECTORY]`), it will launch a test server that hosts your site at the optionally specified PORT. You can access this site through the address that is printed out to the command-line. Previewing your site in this manner is a handy way of seeing what the pages of your site look like before publishing.
 
 When the test server is running, your site will be constantly scanned for changes. If changes are detected, then the relevant pages will be regenerated. If you have any of the modified pages open in your browser, they will need to be refreshed for the changes to take effect.
+
+Typing `quit` or `exit` (or inserting an end-of-file character) into the command-line, while the server is running, will cleanly exit the server.
 
 ### Publishing the site
 When site-generator is run with the `--publish` flag (`site-generator -p [DIRECTORY]`), it will generate your site then push it to the server specified in your top-level config file by the variable `:server`. The server string should be an Rsync compatible string specifying your username, server address, and the directory on the server into which the site should be loaded. This string is in the form of: `username@server:dir`. E.g.:
@@ -817,7 +817,7 @@ On top of the functions supplied by [Common Lisp](http://www.lispworks.com/docum
 - `(echo &rest STRINGS)`: Combine the list of `STRINGS` into one string.
 - `(first-line STRING)`: Return the first line of the `STRING`.
 - `(get-content PAGE CONTENT-VARIABLE)`: Get the value of the `CONTENT-VARIABLE` (in keyword form, so `title` would be `:title`) from the `PAGE` (relative to the content directory).
-- `(get-pages DIRECTORY &key NUMBER START ORDER)`: Return the pages that are present in `DIRECTORY`, `ORDER`ed by `:descending` or `:ascending`. `NUMBER`, if supplied limits the number of pages returned. `START` offsets the start of the returned list by the given number. E.g. `(getpages "foo" :number 3 :start 5)` returns the 6th, 7th, and 8th pages from the directory `content/foo/`.
+- `(get-pages DIRECTORY &key NUMBER START ORDER)`: Return the date sorted pages that are present in `DIRECTORY`, `ORDER`ed by `:descending` or `:ascending`. `NUMBER`, if supplied, limits the number of pages returned. `START` offsets the start of the returned list by the given number. E.g. `(getpages "foo" :number 3 :start 5)` returns the 6th, 7th, and 8th pages from the directory `content/foo/`.
 - `(include TEMPLATE)`: Reads the file `TEMPLATE` (relative to the template directory) and returns its contents.
 - `(join-strings SEPARATOR &rest STRINGS)`: Joins the `STRINGS` together with `SEPARATOR` in between. E.g. `(join-strings " " "foo" "bar" "baz")` results in `"foo bar baz"`.
 - `(lines STRING)`: Returns a list of strings that correspond to the lines in STRING, with empty lines removed.

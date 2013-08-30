@@ -3,7 +3,8 @@
 (export '(publish-site))
 
 (defun publish-site (dir)
-  "Pathspec -> nil"
+  "Pathspec -> nil
+Generate the site, then copy its contents to the server specified by :SERVER in *ENVIRONMENT*, via Rsync."
   (generate-site dir)
   (print-message "Publishing ~a" dir)
   (let ((server (getf (parse-content (merge-pathnames "config" *content-dir*))

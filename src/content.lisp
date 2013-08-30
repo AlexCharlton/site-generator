@@ -125,7 +125,7 @@ Merge two :DEFAULT plists."
 
 ;;;; ## Evaluation environment
 (defmacro with-environment (&body body)
-  "Evaluate the BODY in a semi anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE in *ENVIRONTMENT*."
+  "Evaluate the BODY in a semi anonymous package, filled with content values associated with *ENVIRONTMENT*. Content is chosen based on :LANG, and the packages :USEs the list :USE from *ENVIRONTMENT*."
   `(let ((*package* (defpackage ,(gensym "environment")
 		      ,(cons :use (getf *environment* :use)))))
      (handler-bind ((warning #'muffle-warning))
@@ -135,7 +135,7 @@ Merge two :DEFAULT plists."
        (delete-package *package*))))
 
 (defun set-up-content-environment ()
-  "For each peice of content in *environment* (see DESTRUCTURE-DATA), set the value of that symbol to the content, and set the macro-function of that symbol to a call to markup and recursively expand the content."
+  "For each piece of content in *ENVIRONMENT* (see DESTRUCTURE-DATA), set the value of that symbol to the content, and set the macro-function of that symbol to a call to markup and recursively expand the content."
   (iter (for (var val) on *environment* by #'cddr)
 	(let+ (((&values data type args) (destructure-data var val)))
 	  (when (eq type :content)
@@ -183,7 +183,7 @@ Return a plist of the Name-Data pairs from FILE."
   "pathname -> list
 Given a FILE, parse that file into a list representing the different components of that content file, namely keyword variables, arguments supplied to them, and their content.
 
-Keyword variables are deliniated by a blank newline before IS-VARIABLE? matches."
+Keyword variables are delineated by a blank newline before IS-VARIABLE? matches."
   (let (ret
 	(last-line-blank? t))
     (with-open-file (f file)
@@ -234,6 +234,16 @@ Break a string by spaces and equals signs and return a list of the resulting str
     :math ,(lambda (x) (when (eq x :true) "--mathjax"))
     :number-sections ,(lambda (x) (when (eq x :true) "--number-sections")))
   "Maps the arguments supported by site-generator to the string arguments supported by pandoc.")
+
+(defun markup (content &rest args)
+  "String &rest (Key Value) -> String
+Unless, :MARKUP in ARGS or *ENVIRONMENT* is :NONE, process content using pandoc."
+  (let ((markup (or (getf args :markup)
+		    (getf *environment* :markup))))
+    (if (or (eq markup :none)
+	    (string= content ""))
+	content
+	(pandoc-process content args))))
 
 (defun generate-pandoc-args (args)
   "(Plist) -> String
@@ -310,7 +320,7 @@ If the template doesn't exist, create it."
 (defun get-pandoc-toc (file-stream args)
   "Pass the file through Pandoc with a special table-of-contents-only template in order to determine the table of contents.
 
-If the template doesn't exist, create it. This function must prompt for the path to the template directory, so it is not the prefered method."
+If the template doesn't exist, create it. This function must prompt for the path to the template directory, so it is not the preferred method."
 
   (let+ (((&flet create-toc-template ()
 	    (format t "Pandoc does not have a toc template.~%Please enter the location of the Pandoc template directory (blank line cancels):~%")
@@ -335,13 +345,3 @@ If the template doesn't exist, create it. This function must prompt for the path
 		       (namestring (pathname file-stream)))
 	 :output :string)
     (asdf/run-program:subprocess-error () (create-toc-template)))))
-
-(defun markup (content &rest args)
-  "String &rest (Key Value) -> String
-Unless, :MARKUP in ARGS or *ENVIRONMENT* is :NONE, process content using pandoc."
-  (let ((markup (or (getf args :markup)
-		    (getf *environment* :markup))))
-    (if (or (eq markup :none)
-	    (string= content ""))
-	content
-	(pandoc-process content args))))

@@ -7,7 +7,7 @@
    expand-string))
 
 (defvar *template-delimiter* #\$
-  "The character that indicates that a template expansion is to take place. If a variable is being expended, an extra delimiter must follow immediately after e.g. *foo*, otherwise the expression following the delimiter should begin with an open paren and be READable.")
+  "The character that indicates that a template expansion is to take place. If a variable is being expended, an extra delimiter must follow immediately after e.g. $foo$, otherwise the expression following the delimiter should begin with an open paren and be READable.")
 
 (defvar *delimiter-escape* #\\
   "The character that indicates that a *TEMPLATE-DELIMITER* should be escaped. This will also escape other *DELIMITER-ESCAPE* characters but only when immediately preceding a *TEMPLATE-DELIMITER*.")
@@ -19,7 +19,7 @@
   "Stream (:output Stream) -> nil
 Copy INPUT to OUTPUT while expanding any template variables or expressions (as delimited by *TEMPLATE-DELIMITER* and *DELIMITER-ESCAPE*). Return the number of template expansions performed.
 
-The evaluation of any expression to be expanded takes place in *PACKAGE*, which can be set to reflect a particular environment with WITH-ENV."
+The evaluation of any expression to be expanded takes place in *PACKAGE*, which can be set to reflect a particular environment with WITH-ENVIRONMENT."
   (let ((*output* output))
     (iter (for c = (read-char input nil 'eof))
 	  (until (eq c 'eof))
@@ -44,7 +44,7 @@ Like EXPAND, but inputs a string. If OUTPUT is nil, output to a string."
   "Stream Stream -> nil
 Determine what characters need to be escaped, and print them to *OUTPUT*. The INPUT stream is positioned immediately after a *DELIMITER-ESCAPE* character.
 
-Only *TEMPLATE-DELIMITER* characters need to be escaped, so if, after the escape character there is not a template delimiter, possibly preceeded by more escape characters, but with nothing in between, then this function should print anything read to *OUTPUT*, unmodified.
+Only *TEMPLATE-DELIMITER* characters need to be escaped, so if, after the escape character there is not a template delimiter, possibly preceded by more escape characters, but with nothing in between, then this function should print anything read to *OUTPUT*, unmodified.
 
 Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* character, in which case, they can also be escaped. In general, an even number of *DELIMITER-ESCAPE* characters means that only the escape characters themselves are being escaped, while an odd number means that the template character is being escaped."
   (let* ((read (list *delimiter-escape*))
@@ -71,9 +71,9 @@ Other *DELIMITER-ESCAPE* characters may appear before the *TEMPLATE-DELIMITER* c
 
 (defun expand-template (input)
   "Stream Stream -> nil
-The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into *OUTPUT* if such template exists.
+The INPUT stream is positioned immediately after a *TEMPLATE-DELIMITER* character and should expand the template into *OUTPUT* if such a template exists.
 
-If the next character in INPUT is non-existant, whitespace, or a digit, the *TEMPLATE-DELIMITER* was not actually indicating the presense of a template, and so the delimiter should be written into *OUTPUT*.
+If the next character in INPUT is non-existent, whitespace, or a digit, the *TEMPLATE-DELIMITER* was not actually indicating the presence of a template, and so the delimiter should be written into *OUTPUT*.
 
 If the following character in INPUT is #\(, it is assumed to belong to a READable expression. 
 
@@ -109,7 +109,7 @@ If the following character in INPUT is anything else, it may be the start of a v
 
 (defun expand-expression (expr)
   "Expr Stream -> nil
-Print the evaluation of the expression EXPR, aesthetically, to *OUTPUT*. The evaluation is recusively expanded. 
+Print the evaluation of the expression EXPR, aesthetically, to *OUTPUT*. The evaluation is recursively expanded. 
 
 Evaluation of symbol expressions are evaluated inside a list in order to call their macro expansion. Because of this they are not recursively expanded, because the macro expansion is assumed to do so."
     (with-input-from-string

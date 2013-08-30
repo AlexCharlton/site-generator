@@ -1,7 +1,7 @@
 (in-package :site-generator-test)
 (in-suite :site-generator)
 
-(defvar *test-dir* (merge-pathnames "tests/"
+(defvar *test-dir* (merge-pathnames "../tests/"
 				    (asdf:component-pathname
 				     (asdf:find-system :site-generator))))
 
@@ -61,11 +61,11 @@
 	  ("Ceci est la fin de la page$(when (bound? title) (echo \" \\\"\" title \"\\\"\")).")
 	  :EN
 	  ("This is the end of the page$(when (bound? title)
-                             (echo \" \" (markup
-			                 (echo \"\\\"\" title
-			                       \"\\\" (these should be curly quotes)\")
-			                 :output-format :markdown
-					 :markup :markdown)))."))
+                              (echo \" \" (markup
+			                  (echo \"\\\"\" title
+			                        \"\\\" (these should be curly quotes)\")
+			                  :output-format :markdown
+			                  :markup :markdown)))."))
 	 :NAV
 	 (:FR
 	  ("* [Accueil]($(page-address \"index\"))
@@ -152,4 +152,8 @@
 mu fu shu\\
 ich ni san\\
 quox quof quafe
-blub blu blub"))))
+blub blu blub")))
+  (is (equal "\\$hi\\$"
+	     (escape-dollars "$hi$"))
+      (equal "\\\\\\$(hi)\\$"
+	     (escape-dollars "\\$(hi)$"))))
