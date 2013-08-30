@@ -33,18 +33,23 @@
 
 (defclass acceptor (hunchentoot:acceptor)
   ()
-  (:default-initargs :address "127.0.0.1"))
+  (:default-initargs :address "127.0.0.1"
+    :access-log-destination nil
+    :message-log-destination nil))
 
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor acceptor) request)
+  "Serve up a static file, with 'index.html' being served when a directory is being requested."
   (let* ((uri (subseq (hunchentoot:script-name request) 1))
 	(file (merge-pathnames uri *site-dir*)))
     (when (file-exists-p file)
-      (if (eq (file-kind file) :directory)
-	  (hunchentoot:handle-static-file (merge-pathnames "index.html"
-							   (pathname-as-directory file)))
-	  (hunchentoot:handle-static-file file)))))
+      (hunchentoot:handle-static-file
+       (if (eq (file-kind file) :directory)
+	   (merge-pathnames "index.html" (pathname-as-directory file))
+	   file)))))
 
 (defun start-server (port)
+  "Integer -> nil
+Start a Hunchentoot server."
   (print-message "Starting test server.")
   (setf *acceptor* (make-instance 'acceptor :port port))
   (hunchentoot:start *acceptor*)
