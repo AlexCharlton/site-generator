@@ -14,6 +14,8 @@ The other area in which *site-generator* excels is its support for content in mu
 
 The *site-generator* test-suite can be run with `(asdf:test-system :site-generator)`.
 
+This documentation is easiest to read at [*site-generator'*'s home](http://alex-charlton.com/projects/site-generator/).
+
 {{{toc}}}
 
 # Features
