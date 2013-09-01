@@ -1,15 +1,11 @@
-:contents
-$(xml (:header (:h1 (str site-name) " Archive")))
-$nav$
-$content$
-
 :title
 Archive
 
-:content
+:contents
 $(xml
+   (:h2 (str title))
    (loop for page in (get-pages "pages")
-         do (htm (:article (:h2 (:a :href (page-address page)
+         do (htm (:article (:h3 (:a :href (page-address page)
                                    (str (page-title page))))
                    (:div :class "article-info"
                      (:div :class "author" (str (page-author page)))

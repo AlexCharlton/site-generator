@@ -1,6 +1,4 @@
 :contents
-$(xml (:header (:h1 (str site-name))))
-$nav$
 $(xml (:article (:h2 (str title))
            (:div :class "article-info" 
              (:div :class "author" (str author))

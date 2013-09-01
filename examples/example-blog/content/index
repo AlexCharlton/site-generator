@@ -1,9 +1,4 @@
-:contents
-$(xml (:header (:h1 (str site-name))))
-$nav$
-$content$
-
-:content
+:contents markup=markdown
 HI! $(foo)
 
 :cl-environment

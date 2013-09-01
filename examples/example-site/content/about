@@ -14,4 +14,4 @@ A_propos
 <p>This is *another* (the asterisks are deliberate) page that uses a different template.</p>
 
 :content lang=fr
-Ceci est un autre page qui utilise un template différent.
+Ceci est un *autre* (il n'y a pas d'astérisques, ici) page qui utilise un template différent.

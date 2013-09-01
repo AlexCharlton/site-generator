@@ -7,4 +7,7 @@ $(xml
               :title "Example blog RSS feed")
        (:title (str (when (bound? title) (echo title " — ")))
                (str site-name)))
-     (:body (str contents))))
+     (:body 
+       (:header (:h1 (str site-name)))
+       (str nav)
+       (str contents))))
