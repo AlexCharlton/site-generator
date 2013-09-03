@@ -1,4 +1,7 @@
-*site-generator* is a command-line application for static site generation. See the section [Using *site-generator*](#using-site-generator) for a tutorial on its use, or check out the examples in the `examples` directory.
+{{{toc}}}
+
+# Introduction
+*site-generator* is a command-line application for static site generation.
 
 Static site generators combine content with HTML templates to create full web sites. They are useful because many websites don't need dynamic content. Dynamic doesn't refer to content that needs to be updated, but rather content that is either updated by the users of the site (instead of by the author or authors of the site), or updated by computers in some way. Many blogs, technical resources, and business websites only need to be updated by one or a handful of people, and not by the public. Even comments on blogs (if they are deemed to be necessary) can be added through external services, or Javascript.
 
@@ -6,17 +9,17 @@ If your site doesn't require dynamic updates, then a static site comes with bene
 
 *site-generator* was motivated by the apparent lack of static site generators that are able to deal with arbitrary content. While being able to input a title, author, date, and content for each of your pages is nice if you have a blog, the ability to generate any pages that that are complex becomes limited to how much you can cram into your content section. For pages with any complexity, this could mean adding a whole bunch of HTML into a file that is meant for content. If other pages were to share this HTML, it would have to be duplicated. This is clearly not solving the problem that a site generator should.
 
-So *site-generator* solves this problem by making you decide what content your site is made of. Behind every page in your site is a *content file*, in which you associate your content with variables. These variables can then be used pretty much anywhere (but should probably be used mostly in *template files*) due to *site-generator*'s powerful templating syntax. With this power comes responsibility, though. *site-generator* is much more powerful than most static site generators, and is therefore more dangerous.
+So *site-generator* solves this problem by making you decide what content your site is made of. Behind every page in your site is a *content file* in which you associate your content with variables. These variables can then be used pretty much anywhere[^templatevars] with *site-generator*'s powerful templating syntax. With this power comes responsibility, though. *site-generator* is much more powerful than most static site generators, and is therefore more dangerous.
 
 The other area in which *site-generator* excels is its support for content in multiple languages. Content can be specified, in the same content file, in as many languages as you want, and *site-generator* will create a site for each language.
 
-*site-generator* was written in Common Lisp. This program would not be possible without the many excellent Common Lisp libraries it uses, not to mention the excellent open source CL implementations. Many thanks to their creators!
+*site-generator* was written in Common Lisp. It would not have been possible without the many excellent Common Lisp libraries it uses, not to mention the excellent open source CL implementations. Many thanks to their creators!
 
 The *site-generator* test-suite can be run with `(asdf:test-system :site-generator)`.
 
 This documentation is easiest to read at [*site-generator'*'s home](http://alex-charlton.com/projects/site-generator/).
 
-{{{toc}}}
+[^templatevars]: But they should probably be used mostly in *template files*.
 
 # Features
 - Accepts arbitrary data in content pages
@@ -37,7 +40,9 @@ Using a stand-alone version of *site-generator* is the easiest way to get starte
 The BSD licenced source code for *site-generator* can be found on [GitHub](https://github.com/AlexCharlton/site-generator).
 
 ## Creating a stand-alone *site-generator*
-If you want to use a development version of *site-generator*, you can create a stand-alone executable file by running the file `make.sh`. This script relies on [Quicklisp](http://www.quicklisp.org/), [Buildapp](http://www.xach.com/lisp/buildapp/), and consequentially [SBCL](http://www.sbcl.org/). The script must be modified to point to your Quicklisp directory (or otherwise, overhauled).
+If you want to use a development version of *site-generator*, you can create a stand-alone executable file by running the file `make.sh`. This script relies on [Quicklisp](http://www.quicklisp.org/), [Buildapp](http://www.xach.com/lisp/buildapp/), and consequentially [SBCL](http://www.sbcl.org/). The script must be modified to point to your Quicklisp directory[^ql].
+
+[^ql]: Otherwise, you could overhaul the script.
 
 ## Bugs
 To see known bugs or to report new ones, go to *site-generator*'s [issue tracker](https://github.com/AlexCharlton/site-generator/issues).
@@ -119,19 +124,19 @@ While this looks the same as the content variable definitions that we made befor
 
 Now, assuming that we had made the template `example-site/templates/other.html`, what would happen when this one-page site is generated? The template `other.html` would be filled in with the values from our file `example-site/content/about`, and the result is output in the file `example-site/site/About_site-generator/index.html` (a French file is generated, too, but we'll get back to that).
 
-There's a few things going on with the way that the output file's name was chosen. First, we see that the file being output is called `index.html`, and it's the directory that this file is in that has a distinctive name. This is so that, when we visit the site at `www.example-site.com/About_site-generator/`, we get the page that we want and the URL is slightly prettier than `www.example-site.com/About_site-generator.html`. If you do want the latter behaviour, it can be controlled with the configuration variable `pages-as-directories` (see [appendix A](#appendix-a-configuration-variables)). Second, we notice that the name of the page was inherited from the title that was set in the content file (albeit with an underscore in the place of the space, since you can't have spaces in URLs). *site-generator* recognizes the page's title as special, and will set it as the output page's path. If there was no title, then the content file's file name would have been used instead (e.g. `example-site/site/about/index.html`).
+There's a few things going on with the way that the output file's name was chosen. First, we see that the file being output is called `index.html`, and it's the directory that this file is in that has a distinctive name. This is so that, when we visit the site at `www.example-site.com/About_site-generator/`, we get the page that we want and the URL is slightly prettier than `www.example-site.com/About_site-generator.html`. If you do want the latter behaviour, it can be controlled with the configuration variable `pages-as-directories` (see [appendix A](#appendix-a-configuration-variables)). Second, we notice that the name of the page was inherited from the title that was set in the content file (albeit with an underscore in the place of the space, since you can't have spaces in URLs). *site-generator* recognizes the page's `title` as special, and will set it as the output page's path. If there was no `title` variable set, then the content file's file name would have been used instead (e.g. `example-site/site/about/index.html`).
 
-Say we decide that `A_propos_de_site-generator` is too long a name for the page, in French. The special configuration variable `slug` can be used to override the path to the output page. `slug` is special in that its content *is* associated with different languages.
+Say we decide that `A_propos_de_site-generator` is too long a name for the page, in French. The special configuration variable `slug` can be used to override the path to the output page. `slug` is special because its content *is* associated with different languages.
 
 ```
 :slug lang=fr
 A_propos
 ```
 
-This sets the French language slug to `A_propos`. So when we generate this content file, we get two pages in the site. One English language page, and one French language page at `example-site/site/fr/A_propos/index.html`. We see that the French page is at a new directory: `example-site/site/fr/`. Every non-default *site-generator* language gets its own directory named after its language code.
+This sets the French language content of the variable `slug` to `A_propos`. So when we generate this content file, we get two pages in the site. One English language page, and one French language page at `example-site/site/fr/A_propos/index.html`. We see that the French page is at a new directory: `example-site/site/fr/`. Every non-default language gets its own directory named after its language code.
 
 ### Config files
-There is one content file (for each directory under `content/`) that is special. The file named `config` is treated differently from the other content files. A config file is used to set variables that are accessible to all of the content files in its directory (and sub-directories). So say we want the entire site to know its name. The file `example-site/content/config` was already created when we initialized the site, so now we're going to put stuff in it.
+There is one content file, for each directory in `content/`, that is special. Files named `config` are treated differently from the other content files. *Config files* are used to set variables that are accessible to all of the content files in its directory (and sub-directories). So say we want the entire site to know its name; A config file is the place to put it -- specifically the top-level config file, which is the config file that's in the `content` directory of your site. The file `example-site/content/config` was already created when we initialized the site, so now we're going to put stuff in it:
 
 ```
 :site-name
@@ -147,10 +152,10 @@ We should also tell the site what languages it should be generating. By default,
 en fr
 ```
 
-`languages` is a configuration variable that can only be set in the top-level config file. Also noteworthy is the fact that the language codes that we're using are arbitrary. By default, *site-generator* only knows the code `en`, and you don't even have to use it. The language codes are just indicators, for you, what language a particular thing is. Any strings can be used (although case won't be preserved), and the default language can be set with the configuration variable `default-language` (which, again, can only be set in the top-level config file).
+`languages` is a configuration variable that can only be set in the top-level config file. It's noteworthy that the language codes we're using are arbitrary. By default, *site-generator* only knows the code `en`, and you don't even have to use it. The language codes are just indicators, for you, of what language a particular thing is. Any string can be used for a language code (although case won't be preserved). The default language can be set with the configuration variable `default-language` (which, again, can only be set in the top-level config file).
 
 ### Markup
-We decide that every page in the site is going to have, or at least might want to have, access to the same navigation bar. We also decide that we can't be bothered to write out the HTML for this navigation bar, so we're going to create this bar in Markdown. Markdown is just one of the many markup languages that Pandoc -- *site-generator*'s markup tool -- can parse. The navigation bar will consist of an unordered list of links, that we will write in our `example-site/content/config` file like this:
+We decide that every page in the site is going to have, or at least might want to have, access to the same navigation bar. We also decide that we can't be bothered to write out the HTML for this navigation bar, so we're going to create this bar in [Markdown](http://daringfireball.net/projects/markdown/). Markdown is just one of the many markup languages that [Pandoc](http://johnmacfarlane.net/pandoc/) -- *site-generator*'s markup tool -- can parse. The navigation bar will consist of an unordered list of links that we will write in our `example-site/content/config` file like this:
 
 ```
 :nav lang=en 
@@ -160,9 +165,9 @@ We decide that every page in the site is going to have, or at least might want t
 * [À propos de site-generator]($(page-address "about"))
 ```
 
-The asterisk is markdown's way of indicating items in an unordered list, while the `[link text](URL)` syntax indicate links. Rather than derive the address for each page, we've added in some code that will be replaced by the address of the desired page, based on its content file name. We'll visit the syntax of this code later.
+The asterisk is markdown's way of indicating items in an unordered list, while the `[link text](URL)` syntax indicate links. Right now our site only has one page, so our list of links only has one item -- the about page. Rather than derive the address for each page, in every language, we've added in some code that will be replaced by the address of the desired page, based on its content file name. We'll visit the syntax of this code later.
 
-Now since we want the `nav` variable to be interpreted as Markdown, we could write this:
+Now since we want the `nav` variable to be interpreted as Markdown, we could have written it like this:
 
 ```
 :nav lang=en markup=markdown
@@ -172,7 +177,7 @@ Now since we want the `nav` variable to be interpreted as Markdown, we could wri
 * [À propos de site-generator]($(page-address "about"))
 ```
 
-Or we could add some new lines:
+But instead we'll add some new lines:
 
 ```
 :default
@@ -191,12 +196,14 @@ markdown
 
 To set the global value of `markup`.
 
-Pandoc can do a good deal of things and interpret a lot of markup languages. *site-generator* provides a number of configuration variables (or arguments to content variables) to affect its input. The main two are `markup` and `output-format` which tell Pandoc how to interpret its input, and what language to output to. The values of these can be almost anything that [Pandoc supports](http://johnmacfarlane.net/pandoc/README.html) as input and output formats (but some obviously won't make much sense -- why would you be outputting to a Word doc?).
+Pandoc can do a good deal of things and interpret a lot of markup languages. *site-generator* provides a number of configuration variables (or arguments to content variables) to affect its input. The main two are `markup` and `output-format` which tell Pandoc how to interpret its input, and what language to output to. The values of these can be almost anything that [Pandoc supports](http://johnmacfarlane.net/pandoc/README.html) as input and output formats.[^output]
 
-The remainder of the Pandoc configuration variables affect Pandoc's extensions. The full list of them can be seen in [appendix C](#appendix-c-pandoc-configuration-variables).
+The remainder of the Pandoc configuration variables try to cover most of the other options that are both supported by Pandoc and that make sense in the context of *site-generator*. The full list of them can be seen in [appendix C](#appendix-c-pandoc-configuration-variables).
+
+[^output]: Some output formats obviously won't make much sense -- why would you be outputting to a Word doc?
 
 ### Wrapping up the example site content
-In order to flesh out our example site, we're going to add a couple more pages. First will be `example-site/content/index`, which was actually already created when we initialized the site. This is page that will appear when you visit the top-level of your domain. To it we will add some basic content.
+In order to flesh out our example site, we're going to add a couple more pages. First will be `example-site/content/index`, which was actually already created when we initialized the site. This is page that will appear when you visit the top-level of the example site domain. To it we will add some basic content.
 
 ```
 :content
@@ -226,7 +233,9 @@ Foo
 Quox
 ```
 
-We'll also amend our navigation bar (in `example-site/content/config` to include these new pages.
+`directory-slug` is like `slug`, but it sets the directory URL string.
+
+We'll also amend our navigation bar (in `example-site/content/config`) to include these new pages.
 
 ```
 :nav lang=en 
@@ -240,7 +249,7 @@ We'll also amend our navigation bar (in `example-site/content/config` to include
 * [Foo]($(page-address "foo/bar"))
 ```
 
-Now when we generate this site, we'll be creating the pages `example-site/site/index.html`, `example-site/site/fr/index.html`, `example-site/site/About_site-generator/index.html`, `example-site/site/fr/A_propos/index.html`, `example-site/site/Foo/Bar/index.html`, and `example-site/site/fr/Quox/Bar/index.html`. Now all we need to do is make the template files for this site.
+Now when we generate this site, we'll be creating (in the directory `example-site/site/`) the pages `index.html`, `fr/index.html`, `About_site-generator/index.html`, `fr/A_propos/index.html`, `Foo/Bar/index.html`, and `fr/Quox/Bar/index.html`. Now all we need to do is make the template files for this site.
 
 ### Template files
 We know we need to make at least two template files, `main.html` (which is the default template file, specified in the top-level config file) and `other.html` (which is used by `about`). Let's start with `main.html`. We make the file `example-site/templates/main.html` and in it we put the outline of what we want the HTML of this site to be:
@@ -325,7 +334,7 @@ And the HTML that will be output for the page `about` will look like this:
 
 `other-languages` has assigned classes to both the unordered list and the item which represents the current language. Say we want to change the class name for the unordered list from `languages` to `langs`. The function `other-languages` gives us a way to do so. But first, a bit of a Lisp lesson.
 
-The syntax for any Lisp expression is `(function ARGS)`, so `(+ 1 2)` is the Lisp way of writing `1 + 2`. There are also keyword arguments (generally known as named arguments in other languages) which are called by writing `(function :keyword arg)`. Because the arguments are named, they can be placed in any order. So `(function :key1 foo :key2 bar)` is the same as `(function :key2 bar :key1 foo)`. Keyword arguments can also be left out and they should default to something sensible, so `(function :key2 bar)` is also allowed.
+The syntax for any Lisp expression is `(function ARGS)`, so `(+ 1 2)` is the Lisp way of writing `1 + 2`. There are also keyword arguments[^keyword] which are called by writing `(function :keyword arg)`. Because the arguments are named, they can be placed in any order. So `(function :key1 foo :key2 bar)` is the same as `(function :key2 bar :key1 foo)`. Keyword arguments can also be left out and they should default to something sensible, so `(function :key2 bar)` is also allowed.
 
 `other-languages` provides two keyword arguments: `ul-class` and `selected-class`. We want to change the `ul-class`, so we'll write
 
@@ -333,7 +342,7 @@ The syntax for any Lisp expression is `(function ARGS)`, so `(+ 1 2)` is the Lis
   <div>$(other-languages :ul-class "langs")</div>
 ```
 
-`langs` is in quotations because it needs to be interpreted as a string. Otherwise, Lisp would think it referred to a variable.
+`langs` is surrounded by double quotes because it needs to be interpreted as a string. Otherwise, Lisp would think it referred to a variable.
 
 Say we realize that we don't want the `<title>` of the page to be just the variable `title`, but we also want to include the `site-name`. We also realize that not all pages have the variable `title` set, so how are we going to get it to work? We need to use a conditional expression:
 
@@ -344,16 +353,7 @@ Say we realize that we don't want the `<title>` of the page to be just the varia
 </title>
 ```
 
-Here we're using the Lisp conditional expression `when` (although `if` would work just as well in its place). The syntax for `when` is `(when TEST-EXPRESSION TRUE-EXPRESSIONS)`, meaning when `TEST-EXPRESSION` evaluates to true (anything that's not `nil`, the canonical Common Lisp false value), `TRUE-EXPRESSIONS` are run. So in the above template expression we're saying that when the variable `title` is bound (`(bound? title)`), then `echo` (combine the arguments into one string) the variable `title` and the string `" — "`. The variable `site-name` is going to appear no matter what.
-
-We could have also written the above using `if` (which has the syntax `(if TEST-EXPRESSION TRUE-EXPRESSION FALSE-EXPRESSION)`):
-
-```html
-<title>$(if (bound? title)
-            (echo title " — " site-name)
-		    site-name)
-</title>
-```
+Here we're using the Lisp conditional expression `when`. The syntax for `when` is `(when TEST-EXPRESSION TRUE-EXPRESSIONS)`, meaning when `TEST-EXPRESSION` evaluates to true (anything that's not `nil`, the canonical Common Lisp false value), `TRUE-EXPRESSIONS` are run. So in the above template expression we're saying that when the variable `title` is bound (`(bound? title)`), then `echo` (combine the arguments into one string) the value of the variable `title` and the string `" — "`. The value of `site-name` is going to appear no matter what.[^if]
 
 One thing to note is that newlines and indentation have no effect on Lisp code, it's just there to make it easier to read.
 
@@ -363,11 +363,12 @@ With our new-found Lisp skills, we decide to write the footer. We realize that w
 :footer-text lang=en
 This is the end of the
 page$(when (bound? title)
-       (echo " " (markup
-	               (echo "\"" title
-			             "\" (these should be curly quotes)")
-	               :output-format :markdown
-			       :markup :markdown))). 
+       (echo " "
+	         (markup
+			   (echo "\"" title
+			         "\" (these should be curly quotes)")
+	           :output-format :markdown
+			   :markup :markdown))). 
 
 :footer-text
 Ceci est la fin de la
@@ -375,14 +376,25 @@ page$(when (bound? title)
        (echo " \"" title "\"")).
 ```
 
-The French footer should be pretty easy to understand. When the variable `title` is bound, echo the text ` " title-text"`. The only tricky bit there are the backslashes in front of the quotation marks. They are there because we want to output literal quotation marks and we don't want to prematurely end the string that contains them, so we escape the quotation marks with a backslash.
+The French footer should be pretty easy to understand. The template expression is saying: When the variable `title` is bound, echo the text ` " TITLE-TEXT"`. The only tricky bit there are the backslashes in front of the quotation marks. They are there because we want to output literal quotation marks and we don't want to prematurely end the string that contains them, so we escape the quotation marks with a backslash.
 
-Speaking of escaping with backslashes, this is also how we escape template variables and expressions. So `\$hi$` will be output as `$hi$` when it gets run through *site-generator*, and the variable `hi` won't be expanded.
+Speaking of escaping with backslashes, this is also how we escape template variables and expressions. So `\$hi$` will be output as `$hi$` when it gets run through *site-generator*, and the variable `hi` won't be expanded. Most of the time, you don't need to escape dollar signs, though. The only times dollar signs need to be escaped is when they might be interpreted as a template variable or expression, and you don't want them to be. Template expressions always begin with `$(`, and template variables are only considered when they have two dollar signs surrounding a string without whitespace.
 
-We've gone a bit crazy for the English footer. The first part is the same -- we're only doing something when `title` is bound -- but the rest includes a call to `markup`. `markup` is the function that *site-generator* uses to run text through Pandoc. In this case, we're passing it the string `"title-text" (these should be curly quotes)`, and we're setting the `output-format` to `markdown` and the `markup` to `markdown`. Why would we be reading and outputting markdown? Well, we're taking advantage of the Pandoc `smart` option, which automatically creates directional quotations where appropriate. Since we don't want this text to be surrounded by `<p>` tags (which would happen if we set the `output-format` to `html`, we output to markdown and the only change to the text is the directional quotes. Leading and trailing whitespace are stripped by Pandoc which is why we have the extra `echo` with a space.
+We've gone a bit crazy with the English footer. The first part is the same as the French footer-- we're only doing something when `title` is bound -- but the rest includes a call to `markup`. `markup` is the function that *site-generator* uses to run text through Pandoc. In this case, we're passing it the string `"TITLE-TEXT" (these should be curly quotes)`, and we're setting the `output-format` to `markdown` and the `markup` to `markdown`. Why would we be reading and outputting markdown? Well, we're taking advantage of the Pandoc `smart` option, which automatically creates directional quotations where appropriate. Since we don't want this text to be surrounded by `<p>` tags (which would happen if we set the `output-format` to `html`) we output to markdown and the only change to the text is the directional quotes. Leading and trailing whitespace are stripped by Pandoc which is why we have the extra `echo` with a space.
+
+[^if]: We could have also written the above `when` expression using `if`, which has the syntax `(if TEST-EXPRESSION TRUE-EXPRESSION FALSE-EXPRESSION)`:
+
+    ```html
+<title>$(if (bound? title)
+            (echo title " — " site-name)
+		    site-name)
+</title>
+```
+
+[^keyword]: Keyword arguments are generally known as "named arguments" in other languages.
 
 ### Breaking up templates with `include`
-Now that we've finished one template, we will move on to the other -- aptly named `other.html`. We realize that we want to reuse the header and footer structure of `index.html`. To do this, we will create two pages `example-site/templates/header.html` and `example-site/templates/footer.html`:
+Now that we've finished one template, we will move on to the other -- aptly named `other.html`. We realize that we want to reuse the header and footer structure of `index.html`. To do this, we will create two pages -- `example-site/templates/header.html`:
 
 ```html
 <!DOCTYPE HTML>
@@ -405,6 +417,8 @@ Now that we've finished one template, we will move on to the other -- aptly name
   </nav>
 ```
 
+And `example-site/templates/footer.html`:
+
 ```html
   <footer>
     $footer-text$
@@ -424,7 +438,7 @@ $(include "header.html")
 $(include "footer.html")
 ```
 
-The templates `header.html` and `footer.html` are used in `main.html` through the command `include`, which accepts one argument: the name of a template file, relative to the template directory. The `include` expression gets replaced with the contents of the template file that is named.
+The templates `header.html` and `footer.html` are used in `main.html` through the function `include`, which accepts one argument: the name of a template file, relative to the template directory. The `include` expression gets replaced with the contents of the template file that is named.
 
 The contents of `example-site/templates/other.html` will be similar to `main.html`.
 
@@ -442,9 +456,9 @@ Instead of the `<article>` tag, we have put the content in side a `<div class="o
 That concludes our first site! The full site can be seen in the [`examples/example-site/`](https://github.com/AlexCharlton/site-generator/tree/master/examples/example-site) directory of the source. Go to the section [Generating the site](#generating-the-site) to learn how to generate the actual site, or continue on to see how you can use *site-generator* to create a blog.
 
 ### An example blog
-We're going to approach this *example blog* from the opposite end compared to how we made the *example site*. We'll start with the templates then move onto the content.
+We're going to approach this *example blog* from the opposite end, compared to how we made the *example site*. We'll start with the templates then move onto the content.
 
-We will again have a template called `main.html`. This `main.html` is going to look quite different from the other one. Rather that writing out the HTML by hand, like a savage, we'll be generating the HTML using Lisp. Specifically, the syntax of [CL-WHO](http://weitz.de/cl-who/). The file `example-blog/templates/main.html` will contain the following:
+We will again have a template called `main.html`. This `main.html` is going to look quite different from the other one. Rather that writing out the HTML by hand, like a savage, we'll be generating the HTML using Lisp. Specifically, using [CL-WHO](http://weitz.de/cl-who/). The file `example-blog/templates/main.html` will contain the following:
 
 ```commonlisp
 $(xml
@@ -460,9 +474,9 @@ $(xml
 	   (str contents))))
 ```
 
-So what's going on here? First, the template expression consists of `$(xml ...)`. `xml` is *site-generator*'s way of denoting that the following code is going to represent a tree of XML (which HTML is). All of the "functions" in that tree (`:html` `:head`, `:body`, etc.) will become HTML tags. Like HTML, these expressions are nested. Attributes of the tag are denoted like keyword arguments: `:attribute value`. So `(:meta :charset "UTF-8")` will turn into `<meta charset="UTF-8" />` The final elements in an HTML expression (that doesn't belong to an attribute) will become the content of that tag. So `(:div "Hi, there!" " Bye!")` would become `<div>Hi, there! Bye!</div>`. When this final value is not a literal string, but instead some other value (like a variable or a function call), we need to tell CL-WHO to treat it like a string. We do this with `str`. `(:body (str contents))` results in the HTML `<body>Whatever the variable contents is</body>`.
+So what's going on here? First, the template expression consists of `$(xml ...)`. `xml` is *site-generator*'s way of denoting that the following code is going to represent a tree of XML (which HTML is). All of the "functions" in that tree (`:html` `:head`, `:body`, etc.) will become HTML tags. Like HTML, these expressions are nested. Attributes of the tag are denoted like keyword arguments: `:attribute value`. So `(:meta :charset "UTF-8")` will turn into `<meta charset="UTF-8" />` The final elements in an HTML expression (that doesn't belong to an attribute) will become the content of that tag. So `(:div "Hi, there!" " Bye!")` would become `<div>Hi, there! Bye!</div>`. When these final values are not a literal string, but instead some other value (like a variable or a function call), we need to tell CL-WHO to treat it like a string. We do this with `str`. `(:body (str contents))` results in the HTML `<body>Whatever the variable contents is</body>`.
 
-In the above template, we see that we have three variables that we'll need to define in the site's content (look at the content of the `str` expressions): `title`, `site-name`, `nav`, and `contents`.
+In the above template, we see that we have three variables that we'll need to define in the site's content (look at the content of the `str` expressions): `title`, `site-name`, `nav`, and `contents`. So in order to make our blog, we'll need to fill in those variables.
 
 In our top-level config file `example-blog/content/config`, we'll add the following content:
 
@@ -482,7 +496,7 @@ $(xml (:nav
 		            "Archives")))))
 ```
 
-We're defining the `site-name` , and `nav`, which are both required by `main.html`. We're also setting the default template to be `main.html`, as expected. The `nav` variable is using the same CL-WHO syntax to generate its HTML.
+We're defining the `site-name` and `nav`, which are both required by `main.html`. We're also setting the default template to be `main.html`, as expected. The `nav` variable is using the same CL-WHO syntax to generate its HTML.
 
 So what is the actual content of the site we want to make? We want this to be a blog, so there must need to be some blog posts. We also promised in our `nav` variable that there will be at least two other pages: one named `index` and one named `archive`. Let's work on the blog posts for now.
 
@@ -510,9 +524,9 @@ $(xml (:article (:h2 (str title))
 Alex
 ```
 
-Now we've filled in the variable `contents`. Ignoring for a moment, the details of big block of XML, we'll just look at what variables are present there: `title`, `author`, and `content`. From this we know what variables we'll need to define when we make a blog post. We've also set `author` to default to `Alex` for all files in this directory.
+Now we've filled in the variable `contents`. Ignoring for a moment the details of big block of XML, we'll just look at what variables are present there (again, look at the `str` expressions): `title`, `author`, and `content`. From this we know what variables we'll need to define when we make a blog post. We've also set `author` to default to `Alex` for all files in this directory.
 
-Now all we need to to to create a blog post is to create a file and fill in some simple values. We do this for the pages `first`, `second` and `third`. For instance `example-blog/content/pages/second`:
+Now all we need in order to create a blog post is to create a file in the directory `example-blog/content/pages/` and fill in some simple values. We do this for the pages `first`, `second` and `third`. For instance `example-blog/content/pages/second`:
 
 ```
 :title
@@ -525,14 +539,14 @@ day=17
 Lorem ipsum...
 ```
 
-Getting back to that big chunk of HTML in `example-blog/content/pages/config`, we see a number of functions that we don't recognize. The first is `page-date`, which is being called with the keyword `:current`. What this function does is return the formatted date of the specified page (in this case the page being specified is the current page, but we could refer to another page, such as `"index"`).
+Getting back to that big chunk of HTML in `example-blog/content/pages/config`, we see a number of functions that we don't recognize. The first is `page-date`, which is being called with the keyword `:current`. What this function does is return the formatted date of the specified page. In this case the page being specified is the current page, but we could refer to another page, such as `"index"`.
 
 ### Dates
-Dates in *site-generator* are complicated enough that they deserve some more discussion. First, you might notice that in `second`, we define `date` to be `day=17`. In `third` we decline to set `date` to anything at all. By default, *site-generator* will set the date of the page to the modification time of the file when the site was first generated. That means that the date output by `page-date` will stay the same even after the content file is modified, as long as the site has been generated with that content file at least once (the last modification time of the file can be accessed with the similar function `page-last-modified`). In your content file you can modify any element of the default date. Setting any of `second`, `minute`, `hour`, `day`, `month`, or `year` in the `date` configuration variable will change that element of the default date. For instance setting `date` to `day=17 month=11` will set the date of that file to the 17th of November, retaining the year and time from the default date of the file.
+Dates in *site-generator* are complicated enough that they deserve some more discussion. First, you might notice that in `second`, we define `date` to be `day=17`. In `third` we decline to set `date` to anything at all. By default, *site-generator* will set the date of the page to the modification time of the file when the site was first generated. That means that the date output by `page-date` will stay the same even after the content file is modified, as long as the site has been generated with that content file at least once.[^lastmodified] In your content file you can modify any element of the default date. Setting any of `second`, `minute`, `hour`, `day`, `month`, or `year` in the `date` configuration variable will change that element of the default date. For instance setting `date` to `day=17 month=11` will set the date of that file to the 17th of November, retaining the year and time from the default date of the file.
 
-Dates can also be formatted in any way you want. `page-date` (and `page-last-modified`) accept a keyword argument `:format`. `:format` is a list of strings and keywords that specify what you want the format of the date to be. In order to write a literal lisp in Lisp you can use the `list` function (e.g. `(list 1 2 3)`) or, if the list does not contain any elements that need to be evaluated, the quote syntactic sugar (e.g. `'(1 2 3)`).
+Dates can also be formatted in any way you want. `page-date` accepts the keyword argument `:format`. `:format` is a list of strings and keywords that specify what you want the format of the date to be. In order to write a literal list in Lisp you can use the `list` function (e.g. `(list 1 2 3)`) or, if the list does not contain any elements that need to be evaluated, the quote syntactic sugar (e.g. `'(1 2 3)`).
 
-The following keywords are accepted by the format argument to `page-date` (inherited from the underlying time library that *site-generator* uses:  [local-time](http://common-lisp.net/project/local-time/manual.html)):
+The following keywords are accepted by the format argument to `page-date`:[^local-time]
 
 - `:year`: *year 
 - `:month`: *numeric month 
@@ -556,9 +570,13 @@ The following keywords are accepted by the format argument to `page-date` (inher
 - `:gmt-offset-or-z`: like :gmt-offset, but is Z when UTC 
 - `:timezone`: timezone abbreviation for the time
 
-Elements marked by * can be placed in a list in the form: `(:keyword PADDING &optional (PADCHAR #\0))` Where `PADDING` is the number of digits that the element should be padded to and `PADCHAR` is the optional character with which to pad, defaulting to `#\0` (a literal `0` character). So `(:seconds 2)` would format as the number of seconds with two digits, e.g. `03` or `24` seconds.
+Elements marked by * can be placed in a list in the form: `(:keyword PADDING &optional (PADCHAR #\0))`, where `PADDING` is the number of digits that the element should be padded to and `PADCHAR` is the optional character with which to pad, defaulting to `#\0` (a literal `0` character). So `(:seconds 2)` would format as the number of seconds with two digits, e.g. `03` or `24` seconds.
 
-The default format string is `'(:long-month " " :ordinal-day ", " :year " " :hour ":" (:min 2) " " :timezone)`.
+The default format string is `'(:long-month " " :ordinal-day ", " :year " " :hour ":" (:min 2) " " :timezone)`, which looks like: August 26th, 2013 21:15 EDT.
+
+[^lastmodified]: The last modification time of the file can be accessed with the similar function `page-last-modified`.
+
+[^local-time]: These keywords are inherited from the underlying time library that *site-generator* uses:  [local-time](http://common-lisp.net/project/local-time/manual.html).
 
 ### Accessing information about other pages
 As a reminder, `example-blog/content/pages/config` contains the following:
@@ -585,7 +603,7 @@ $(xml (:article (:h2 (str title))
 Alex
 ```
 
-We still have to explain a couple of functions that were used in `contents`. First is `(content)`. While this is referring to the content variable `content`, this is using the syntax of a function call. Why is that? For every content variable that we create, a function with the same name is also created. A template variable like `$title` is actually the same as the template expansion `$(title)`. This function that is provided for each content variable is responsible for doing the markup of the contents of the variable, as well as expanding any template variables or expressions that it might contain. So inside a template expression such as `$(xml ...)`, when we refer to `title`, we're actually referring to the "raw" data of title -- the unprocessed string. Whenever that string doesn't include any template variables or expressions, and it isn't supposed to be marked up, we can use that "raw" data and there will be no difference. When the content *should* be marked up, like the variable `content`, we must use its function call, e.g. `(content)`.
+We still have to explain a couple of functions that were used in `contents`. First is `(content)`. While this is referring to the content variable `content`, this is using the syntax of a function call. Why is that? For every content variable that we create, a function[^fn] with the same name is also created. This function is responsible for doing the markup of the contents of the variable, as well as expanding any template variables or expressions that it might contain. So inside a template expression such as `$(xml ...)`, when we refer to `title`, we're actually referring to the "raw" data of title -- the unprocessed string. Whenever that string doesn't include any template variables or expressions, and it isn't supposed to be marked up, we can use that "raw" data and there will be no difference. When the content *should* be marked up, like the variable `content`, we must use its function call, e.g. `(content)`. Since we generally expect things to be marked up and expanded, a template variable like `$title` is actually the same as the template expansion `$(title)`. 
 
 Underneath the `(str (content))` there are two spans with the classes `prev` and `next` which are used to point to the previous and next blog posts. The content of these spans is some code that begins with `(let ...)`. `let` is a lisp expression that has the syntax `(let (BINDINGS) EXPRESSIONS)` where bindings are any number of `(VARIABLE VALUE)` pairs. `let` establishes these variables within the scope of its body. So,
 
@@ -605,13 +623,17 @@ Is equal to `3`. In the above `(:span :class "prev" ...)`, we're setting the loc
 
 Is saying that, when the variable `prev` exists (because there isn't always going to be a previous page, in the case that you are rendering the most recent page), output a link to the address of that previous page with the link text `"Previous post"`.
 
-The one last thing we haven't talked about is the `(htm ...)` here. Remember `str` that was used when you wanted the non-string-literal contents of a bit of CL-WHO HTML to be output as a string? You might wonder why `str` was not placed around the `let`. In this case, since we got back to using CL-WHO HTML syntax, we didn't need a `str`. Instead what we needed was `htm` to let CL-WHO know that we wanted to get back to using its syntax.
+The one last thing we haven't talked about is the `(htm ...)` here. Remember `str` that was used when you wanted the non-string-literal contents of a bit of CL-WHO HTML to be output as a string? You might wonder why `str` was not placed around the `let`. In this case, since we got back to using CL-WHO HTML syntax, we didn't need a `str`[^htm]. Instead we use `htm` to let CL-WHO know that we wanted to get back to using its syntax.
 
 The next span, with class `next`, is the same as the one with class `prev`, but it makes reference to the posts that were made prior to the current page.
 
+[^fn]: Actually a macro is created, but this is of little consequence.
+
+[^htm]: We could choose to do so, but then we'd need another `xml` function in place of the `htm`
+
 ### Custom lisp functions
 
-Based on the `nav` variable that we set in the top-level config file, we know we have at least two more pages that we want to create: `index` and `archive`. `example-blog/content/index` will be a very simple page, with one twist.
+Based on the `nav` variable that we set in the top-level config file, we know we have at least two more pages that we want to create: `index` and `archive`. `example-blog/content/index` will be a very simple page, with one twist:
 
 ```commonlisp
 :contents
@@ -633,7 +655,7 @@ We're defining `contents` as expected, but in it we're referencing the function 
 The configuration variable `cl-environment` sets up a custom Common Lisp environment that is created before your content files are turned into web pages. In the above environment, we're defining the function `foo` using `defun` which has the syntax `(defun FUNCTION-NAME (ARGS) EXPRESSIONS)`. `foo` just returns the string `"I'm a function!"`, so it isn't particularly useful. You could use any Common Lisp functions you want, in `cl-environment`, including loading Lisp files. By doing so, *site-generator* can be extended to do pretty much anything. While we can't give a full tutorial on how to use Common Lisp, we recommend reading [Practical Common Lisp](http://www.gigamonkeys.com/book/) in order to learn more about the language.
 
 ### Creating aggregate pages
-So now we need to create `example-blog/content/archive`. We know that this should be a list of all of the articles we put in `example-blog/content/pages/`. In order to get this information, we'll use the function `(get-pages DIRECTORY)` to get a list of all the pages in the directory `pages`. We'll then need to loop over this list, creating HTML for each page.
+So now we need to create `example-blog/content/archive`. We know that this should be a list of all of the articles we put in `example-blog/content/pages/`. In order to get this information, we'll use the function `(get-pages DIRECTORY)` to get a list of all the pages in the directory `pages/`. We'll then need to loop over this list, creating HTML for each page.
 
 ```commonlisp
 :title
@@ -660,9 +682,11 @@ $(xml
 pages/
 ```
 
-`loop` uses the syntax `(loop for X in LIST do EXPRESSION)` to loop over a list. For each element of `LIST`, it assigns the value to `X` and then executes the `EXPRESSION`. In this case, for each element in `(get-pages "pages")`, we're creating an `<article>` tag and putting a header containing the title of the article, a div containing the page's author and date, a paragraph containing the `first-line` of `(get-content page :content)` (which gets the supplied content variable from the given page, so in this case, we are getting the first paragraph of the `content` of each page), and a paragraph containing a link to the rest of the article.
+`loop` uses the syntax `(loop for X in LIST do EXPRESSION)` to loop over a list.[^loop] For each element of `LIST`, it assigns the value to `X` and then executes the `EXPRESSION`. In this case, for each element in `(get-pages "pages")`, we're creating an `<article>` tag and in it we're putting a header containing the title of the article, a div containing the page's author and date, a paragraph containing the `first-line` of `(get-content page :content)` (which gets the supplied content variable from the given page, so in this case, we are getting the first paragraph of the `content` of each page), and a paragraph containing a link to the rest of the article.
 
-Finally we see that the page `depends` on `pages/`. Hopefully it makes some sense that this is the case. The full meaning of `depends` is explained in [Generating the site](#generating-the-site).
+Finally we see that the page `depends` on `pages/`. Hopefully it makes some sense that a page that uses information from the directory `pages/` should depend on that directory. The full meaning of `depends` is explained in [Generating the site](#generating-the-site).
+
+[^loop]: The full syntax of `loop` is [pretty complex](http://www.lispworks.com/documentation/HyperSpec/Body/06_a.htm), but this should suffice for most sites. Practical Common Lisp has a [good introduction](http://www.gigamonkeys.com/book/loop-for-black-belts.html) to this crazy macro.
 
 ### Creating RSS feeds
 How about an RSS feed for this blog? We create the file `example-blog/content/rss`:
@@ -678,7 +702,7 @@ rss.lisp
 pages/
 ```
 
-Simple enough. The only thing new is the `extension`. This configuration variable prevents *site-generator* from blindly outputting an `.html` file and will instead force it to output a `.whatever` file. In this case, we'll be generating the page `example-blog/site/rss.xml`.
+Simple enough. The only new thing is the `extension`. This configuration variable prevents *site-generator* from outputting an `.html` file and will instead force it to output a `.EXTENSION` file. In this case, we'll be generating the page `example-blog/site/rss.xml`.
 
 Also notable is that we set the template to `rss.lisp`. Templates don't need to have any particular extension, so since we'll be writing this template mostly in Lisp (even though it is still a *site-generator* template file) we might as well let our editor know how to handle it. In `example-blog/templates/rss.lisp`, we write:
 
@@ -706,11 +730,14 @@ $(xml
 					                            :content)
 			                       :markup :markdown))
 					  " ]]>")))))))
+
+:depends
+pages/
 ```
 
 The only new function here is `build-time` which returns the string representing the time at which it is called, formatted to the RFC 3339 Internet standard. We also see `(page-date page :format +rfc+)` where `+rfc+` is the format list which corresponds to the aforementioned standard. 
 
-Now that we have our RSS feed, we should add it to the header of our `main.html` template. While we're add it, why don't we add a reference to a style sheet!:
+Now that we have our RSS feed, we should add it to the header of our `main.html` template. While we're at it, why don't we add a reference to a style sheet!:
 
 ```commonlisp
 $(xml
@@ -740,7 +767,7 @@ Once you have created a site, generating it is easy! Simply run the command `sit
 
 This command will only regenerate the files that need to be. So if you modify the file `example-site/content/index`, only the file `example-site/site/index.html` will be regenerated. Modifying config files will trigger the regeneration of all of the files in their directory (and sub-directories), and modifying template files will trigger the regeneration of all the files that use them. This means that modifying the top-level config file will cause the entire site to be regenerated.
 
-The configuration variable `:depends` will alter this behaviour. `:depends` takes a line-separated list of paths. Pages for which `:depends` is set will be updated when any files named in that list of paths, or that exist in a directory in those paths, is changed. For example, since the files `example-blog/content/rss` and `example-blog/content/archives` both have the lines:
+The configuration variable `:depends` will alter this behaviour. `:depends` takes a line-separated list of paths. Pages for which `:depends` is set will be updated when any files named in that list of paths, or that exist in a directory name by those paths, is changed. For example, since the files `example-blog/content/rss` and `example-blog/content/archives` both have the lines:
 
 ```
 :depends
@@ -767,7 +794,7 @@ alexcharlton@alex-charlton.com:alex-charlton.com/
 Be careful, though: *site-generator* deletes any content that is present in that directory on the server!
 
 ## Executing additional commands
-Sometimes, your site may depend on having some other commands run for it to be built properly. A common example of this is needing to compile Coffee Script, et al., to Javascript. *site-generator* makes it easy to automate these commands through the `:commands` variable, which must be placed in the top-level config file.
+Sometimes, your site may depend on having some other commands run for it to be built properly. A common example of this is needing to compile CoffeeScript, et al., to Javascript. *site-generator* makes it easy to automate these commands through the `:commands` variable, which must be placed in the top-level config file.
 
 `:commands` is processed as a list of command-line commands, separated by newlines. Each command is run with the *site-generator* directory as the current directory. Newlines can be escaped with backslashes. E.g.:
 
@@ -787,31 +814,30 @@ Configuration variables are variables that are defined in config or content file
 
 - `:cl-environment`: Common Lisp code that is evaluated before the content file is generated into a page.
 - `:commands`: Line separated command-line commands that are executed when *site-generator* is passed the `--run-commands` flag. Newlines can be backslash escaped. May only be defined in the top-level config file.
-- `:date`: A list of `unit=values` which are then used to modify the default date of the content file. Supported units are `second`, `minute`, `hour`, `day`, `month`, and `year`. May only be defined in a content file.
-- `:default`: Accepts lines with a syntax similar to the definition of content variables. Used to set the default Pandoc arguments for specific content variables. This variable is special in the way it is inherited between config files -- the default values are merged together rather than overwritten. The default value of `default` is `:content markup=markdown`, which makes markdown the default `markup` value for all `content` values.
+- `:date`: A list of `unit=value` pairs which are used to modify the default date of the content file. Supported units are `second`, `minute`, `hour`, `day`, `month`, and `year`. May only be defined in a content file.
+- `:default`: Accepts lines with a syntax similar to the definition of content variables. Used to set the default Pandoc arguments for specific content variables. This variable is special in the way it is inherited between config files -- the default values are merged together rather than overwritten. The default value of `default` is `:content markup=markdown`, which makes `markdown` the default `markup` value for all `content` values.
 - `:default-language`: A language code that is set to be the default language for the site. Defaults to `en`. May only be defined in the top-level config file.
 - `:depends`: The list of paths and files, relative to the content directory, that the files for which this variable applies depend upon for generation. Every time a file that is depended upon is modified, the file that depends on it will be regenerated.
-- `:directory-slug`: The string that will be used to represent the URL of the directory in which the config file where `directory-slug` was defined, resides. May only be defined in a config file.
+- `:directory-slug`: The string that will be used to represent the URL of the directory of the config file where `directory-slug` was defined. May only be defined in a config file.
 - `:extension`: The file extension that will be used for the affected pages, when they are generated.
 - `:highlight`: `true` or `false` -- whether or not Pandoc will highlight code blocks that have a language specified. The highlighting will only be visible with an appropriate CSS file. See the [example code highlighting CSS file](https://github.com/AlexCharlton/site-generator/tree/master/examples/code-highlight.css). Defaults to `true`.
 - `:languages`: A space or comma separated list of language codes. A site for every language code listed will be generated. Defaults to `en`. May only be defined in the top-level config file.
 - `:markup`: The name that represents the type of markup that the affected content should be interpreted as. Any value that [Pandoc understands](http://johnmacfarlane.net/pandoc/README.html) is permissible. For `markdown`, extensions can be added and removed with + and - (see the Pandoc README). Defaults to `none`.
-- `:math`: `true` or `false` -- use MathJax to render math. Implicitly false.
-- `number-sections`: `true` or `false` -- number section headings. Implicitly false.
+- `number-sections`: `true` or `false` -- number section headings. Defaults to `false`.
 - `:output-format`: The name that represents the desired output format of the affected, marked up content. May be any output format that Pandoc understands, but only some will be useful. Defaults to `html5`.
-- `:pages-as-directories`: `true` or `false` -- whether or not to output a page to an `index.html` file in the directory that represents the page's name, thus creating "pretty" URLS. Defaults to `true`. May only be defined in the top-level config file.
+- `:pages-as-directories`: `true` or `false` -- whether or not to output a page to an `index.html` file in the directory that represents the page's name, thus creating "pretty" URLs. Defaults to `true`. May only be defined in the top-level config file.
 - `:server`: The string understood by Rsync that represents the `username@server-address:directory` to which the site will be uploaded when *site-generator* is passed the `--publish` flag.
 - `:slug`: The string that will be used to represent the URL of the page of the content file in which `slug` was defined. May only be defined in a content file.
 - `:smart`: `true` or `false` -- whether or not Pandoc will create typographically correct output. Defaults to `true`.
 - `:template`: The file name (relative to the template directory) of the template that will be used for the affected files.
-- `:toc`: `true` or `false` -- whether or not to generate a table of contents with the Pandoc output. The resulting table of contents can be accessed in the content that was processed to create the table using the special symbol `{{{toc}}}` (which is impotent when placed between `pre` tags). The variable `toc` will also be set to the resulting table of contents, but this variable will only be bound after the content has been processed, making this of limited use if the table of contents is to go before the content. Implicitly false.
+- `:toc`: `true` or `false` -- whether or not to generate a table of contents with the Pandoc output. The resulting table of contents can be accessed in the content that was processed to create the table using the special symbol `{{{toc}}}` (which is impotent when placed between `pre` tags). The variable `toc` will also be set to the resulting table of contents, but this variable will only be bound after the content has been processed, making this of limited use if the table of contents is to go before the content. Defaults to `false`.
 - `:toc-depth`: The number of sections levels that will be included in the table of contents. Defaults to `3`.
-- `:use`: The space or comma separated list of Lisp Packages to `use` in the generation environment. Defaults to `cl site-generator cl-who`.
+- `:use`: The space or comma separated list of Lisp packages to `use` in the generation environment. Defaults to `cl site-generator cl-who`.
 
-Further, the variables `lang` and `current-file` are reserved by *site-generator* and may not be defined in any content file.
+Additionally, the variables `lang` and `current-file` are reserved by *site-generator* and may not be defined in any content file.
 
 ## Appendix B -- Supplied functions
-On top of the functions supplied by [Common Lisp](http://www.lispworks.com/documentation/HyperSpec/Front/) (see appendix C) and [CL-WHO](http://weitz.de/cl-who/), the following functions are available when writing template and content files:
+On top of the functions supplied by [Common Lisp](http://www.lispworks.com/documentation/HyperSpec/Front/) and [CL-WHO](http://weitz.de/cl-who/), the following functions are available when writing template and content files:
 
 - `(bound? VARIABLE)`: Return the value of `VARIABLE` if the variable is bound, and `nil` otherwise.
 - `(build-time)`: Return the RFC 3339 formatted time string of the time that this function is called.
@@ -840,7 +866,6 @@ These are both arguments that can be appended to variable definition (e.g. `:var
 - `additional-pandoc-args`
 - `highlight`
 - `markup`
-- `math`
 - `number-sections`
 - `output-format`
 - `smart`
@@ -850,7 +875,7 @@ These are both arguments that can be appended to variable definition (e.g. `:var
 ## Appendix D -- *site-generator* syntax
 Templates contain `$template-variables$` and `$(template expressions)`. When templates are expanded, these are replaced with the value of the variable or the result of the expression.
 
-Content files define configuration variables and content variables. The list of configuration variables can be seen in [appendix A](#appendix-a-configuration-variables). Content variables can have additional arguments in the form of key-value pairs separated by equal signs.
+Content files define configuration variables and content variables. The list of configuration variables can be seen in [appendix A](#appendix-a-configuration-variables). Variables are defined by starting a line with the name of the variable, prepended by a colon. Variables must be be preceeded by a blank line. Content variables can have additional arguments, appearing on the same line as the variable, in the form of key-value pairs separated by equal signs. E.g.:
 
 ```
 :template
