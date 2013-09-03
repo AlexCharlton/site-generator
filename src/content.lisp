@@ -52,7 +52,6 @@
     :toc ,#'string->keyword
     :toc-depth ,#'string->keyword
     :highlight ,#'string->keyword
-    :math ,#'string->keyword
     :number-sections ,#'string->keyword
     :default ,#'(lambda (x)
 		  (mapcan (lambda (line)
@@ -231,7 +230,6 @@ Break a string by spaces and equals signs and return a list of the resulting str
     :toc ,(lambda (x) (when (eq x :true) "--toc"))
     :toc-depth ,(lambda (x) (format nil "--toc-depth=~(~a~)" x))
     :highlight ,(lambda (x) (when (not (eq x :true)) "--no-highlight"))
-    :math ,(lambda (x) (when (eq x :true) "--mathjax"))
     :number-sections ,(lambda (x) (when (eq x :true) "--number-sections")))
   "Maps the arguments supported by site-generator to the string arguments supported by pandoc.")
 
