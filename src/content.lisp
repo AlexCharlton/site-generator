@@ -194,11 +194,11 @@ Keyword variables are delineated by a blank newline before IS-VARIABLE? matches.
 		    (push variable ret)
 		    (push args ret)
 		    (push "" ret))
+		  (if ret
+		      (setf (car ret) (concatenate 'string (car ret) line
+						   '(#\Newline)))
 		  (when (string/= (trim line) "")
-		    (if (stringp (car ret))
-			(setf (car ret) (concatenate 'string (car ret) line
-						     '(#\Newline)))
-			(error "Not a well-formed content file: ~a. No initial variable found." file)))))
+		      (error "Not a well-formed content file: ~a. No initial variable found." file)))))
 	    (setf last-line-blank? (string= (trim line) ""))))
     (reverse ret)))
 
