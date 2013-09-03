@@ -624,13 +624,16 @@ Return the list of page paths of pages in DIRECTORY from the *DB*, sorted by dat
 	(time-sort (ecase order
 		     (:ascending #'timestamp<)
 		     (:descending #'timestamp>))))
-    (mapcar #'car
-	    (sort (iter (for (path entry) in-hashtable *db*)
-			(when (and (scan regex (namestring path)))
-			  (collect (cons (namestring path) entry))))
-		  (lambda (a b) (funcall time-sort
-					 (content-entry-date (cdr a))
-					 (content-entry-date (cdr b))))))))
+    (remove
+     (concatenate 'string (namestring (pathname-as-directory directory)) "index")
+     (mapcar #'car
+	     (sort (iter (for (path entry) in-hashtable *db*)
+			 (when (and (scan regex (namestring path)))
+			   (collect (cons (namestring path) entry))))
+		   (lambda (a b) (funcall time-sort
+					  (content-entry-date (cdr a))
+					  (content-entry-date (cdr b))))))
+     :test #'equal)))
 
 (defun get-pages (directory &key number (start 0) (order :descending))
   "String &key (number Integer) (start Integer) (order :descending|:ascending)
