@@ -160,10 +160,15 @@ Merge two :DEFAULT plists."
 
 (defun parse-content (file)
   "Pathname -> Plist
-Return a plist of the Name-Data pairs from FILE."
+Return a plist of the Name-Data pairs from FILE.
+
+When the content is equal to 'nil', set it to NIL."
   (let (ret)
     (iter (for (var args content) on (parse-content-file file) by #'cdddr)
-	  (let ((content (trim content)))
+	  (let+ ((content (trim content))
+		 (content (if (string= content "nil")
+			      nil
+			      content)))
 	    (when (string= content "")
 	      (error "Variable ~a does not have any content in file ~a"
 		     var file))
