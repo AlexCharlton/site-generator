@@ -16,6 +16,7 @@ Generate the site, then copy its contents to the server specified by :SERVER in 
 						"--verbose"
 						"--archive"
 						"--compress"
+						"--progress"
 						"--copy-unsafe-links"
 						"--del"
 						(namestring *site-dir*)
