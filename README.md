@@ -7,17 +7,19 @@ Static site generators combine content with HTML templates to create full web si
 
 If your site doesn't require dynamic updates, then a static site comes with benefits. Because there is no code that needs to be run after a request to the server, there is much less room for security problems. And since serving static pages requires less processing, static sites will be faster and use less memory, which means they can handle more traffic than a comparable dynamic site.
 
-*site-generator* was motivated by the apparent lack of static site generators that are able to deal with arbitrary content. While being able to input a title, author, date, and content for each of your pages is nice if you have a blog, the ability to generate any pages that that are complex becomes limited to how much you can cram into your content section. For pages with any complexity, this could mean adding a whole bunch of HTML into a file that is meant for content. If other pages were to share this HTML, it would have to be duplicated. This is clearly not solving the problem that a site generator should.
+*site-generator* was motivated by the apparent lack of static site generators that are able to deal with arbitrary content. While being able to input a title, author, date, and content for each of your pages is nice if you have a blog, the ability to generate any pages that are complex becomes limited to how much you can cram into your content section. For pages with any complexity, this could mean adding a whole bunch of HTML into a file that is meant for content. If other pages were to share this HTML, it would have to be duplicated. This is clearly not solving the problem that a site generator should.
 
 So *site-generator* solves this problem by making you decide what content your site is made of. Behind every page in your site is a *content file* in which you associate your content with variables. These variables can then be used pretty much anywhere[^templatevars] with *site-generator*'s powerful templating syntax. With this power comes responsibility, though. *site-generator* is much more powerful than most static site generators, and is therefore more dangerous.
 
 The other area in which *site-generator* excels is its support for content in multiple languages. Content can be specified, in the same content file, in as many languages as you want, and *site-generator* will create a site for each language.
 
+*site-generator* was written for advanced users. It does not do anything to safeguard against bad practises. It is only a tool for combining content with templates, with some conveniences. People who know Common Lisp will get the most out of *site-generator*, since CL is the language with which *site-generator* can be extended. Knowing Common Lisp is not a prerequisite for using *site-generator*, however. The documentation explains all of the CL required to build pretty much any site (it's not much).
+
 *site-generator* was written in Common Lisp. It would not have been possible without the many excellent Common Lisp libraries it uses, not to mention the excellent open source CL implementations. Many thanks to their creators!
 
 The *site-generator* test-suite can be run with `(asdf:test-system :site-generator)`.
 
-This documentation is easiest to read at [*site-generator'*'s home](http://alex-charlton.com/projects/site-generator/).
+This documentation is easiest to read at [*site-generator*'s home](http://alex-charlton.com/projects/site-generator/).
 
 [^templatevars]: But they should probably be used mostly in *template files*.
 
@@ -97,7 +99,7 @@ About site-generator
 À propos de site-generator
 ```
 
-The `title` variable now has some new information. Namely, that the French component of the title is the string `À propos de site-generator`. The previous information assigned to title (`About site-generator`) is still there, since is was assigned to the default language (which is English, a.k.a. `en`). Note that variable definitions (or in this case the addition of new content in a different language) must be preceded by a blank line.
+The `title` variable now has some new information. Namely, that the French component of the title is the string `À propos de site-generator`. The previous information assigned to title (`About site-generator`) is still there, since it was assigned to the default language (which is English, a.k.a. `en`). Note that variable definitions (or in this case the addition of new content in a different language) must be preceded by a blank line.
 
 We'd also like to add some sort of primary content to the file. we decide that the content should be the following:
 
@@ -203,7 +205,7 @@ The remainder of the Pandoc configuration variables try to cover most of the oth
 [^output]: Some output formats obviously won't make much sense -- why would you be outputting to a Word doc?
 
 ### Wrapping up the example site content
-In order to flesh out our example site, we're going to add a couple more pages. First will be `example-site/content/index`, which was actually already created when we initialized the site. This is page that will appear when you visit the top-level of the example site domain. To it we will add some basic content.
+In order to flesh out our example site, we're going to add a couple more pages. First will be `example-site/content/index`, which was actually already created when we initialized the site. This is the page that will appear when you visit the top-level of the example site domain. To it we will add some basic content.
 
 ```
 :content
@@ -283,7 +285,7 @@ We know we need to make at least two template files, `main.html` (which is the d
 
 ```
 
-All these comments are place-holders for where we want content to be filled in. To fill in the content we need to add *template variables* or *template expressions*. Template variables are the simplest to understand. The are the name of a content variable that you have defined (or plan to define) in a content file, surrounded by dollar signs -- like `$content$`. We already know that several of these place-holders map directly to content variables that we defined in our content pages:
+All these comments are place-holders for where we want content to be filled in. To fill in the content we need to add *template variables* or *template expressions*. Template variables are the simplest to understand. They are the name of a content variable that you have defined (or plan to define) in a content file, surrounded by dollar signs -- like `$content$`. We already know that several of these place-holders map directly to content variables that we defined in our content pages:
 
 ```html
 <!DOCTYPE HTML>
@@ -315,7 +317,7 @@ All these comments are place-holders for where we want content to be filled in. 
 ```
 
 ### Template expressions, or A Lisp primer
-Now, for the language selection, we want some code that will output a list of links that point to the current page but in a different language. *site-generator* provides a function to do so called `other-languages`. To call this function, we need to use a *template expression* which is a set of parenthesis containing the desired expression (written in Common Lisp), preceded by a dollar sign. So our language selection will look like so:
+Now, for the language selection, we want some code that will output a list of links that point to the current page but in a different language. *site-generator* provides a function to do so called `other-languages`. To call this function, we need to use a *template expression* which is a set of parentheses containing the desired expression (written in Common Lisp), preceded by a dollar sign. So our language selection will look like so:
 
 ```html
   <div>$(other-languages)</div>
@@ -524,7 +526,7 @@ $(xml (:article (:h2 (str title))
 Alex
 ```
 
-Now we've filled in the variable `contents`. Ignoring for a moment the details of big block of XML, we'll just look at what variables are present there (again, look at the `str` expressions): `title`, `author`, and `content`. From this we know what variables we'll need to define when we make a blog post. We've also set `author` to default to `Alex` for all files in this directory.
+Now we've filled in the variable `contents`. Ignoring for a moment the details of the big block of XML, we'll just look at what variables are present there (again, look at the `str` expressions): `title`, `author`, and `content`. From this we know what variables we'll need to define when we make a blog post. We've also set `author` to default to `Alex` for all files in this directory.
 
 Now all we need in order to create a blog post is to create a file in the directory `example-blog/content/pages/` and fill in some simple values. We do this for the pages `first`, `second` and `third`. For instance `example-blog/content/pages/second`:
 
@@ -631,7 +633,7 @@ The next span, with class `next`, is the same as the one with class `prev`, but 
 
 [^htm]: We could choose to do so, but then we'd need another `xml` function in place of the `htm`
 
-### Custom lisp functions
+### Custom Lisp functions
 
 Based on the `nav` variable that we set in the top-level config file, we know we have at least two more pages that we want to create: `index` and `archive`. `example-blog/content/index` will be a very simple page, with one twist:
 
@@ -886,4 +888,16 @@ This is some content that is assigned to the variable
 content-variable.
 
 This is more of the same content
+```
+
+`nil` is a special content value, that will set the value of the content to Common Lisp's `nil`, e.g.:
+
+```
+:some-content
+nil
+
+:other-content
+$(when (bound? some-content)
+   "Even though, some-content is bound, this will still
+   never be printed, because some-content is set to nil"
 ```
