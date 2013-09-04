@@ -21,7 +21,7 @@
 
 (defconstant +version-major+ 0)
 (defconstant +version-minor+ 1)
-(defconstant +version-release+ 1)
+(defconstant +version-release+ 2)
 
 ;;;; ## Primary interface
 ;; Directories site-generator expects
