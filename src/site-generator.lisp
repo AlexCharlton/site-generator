@@ -619,21 +619,21 @@ Return the raw content of the variable NAME from PAGE. The :lang from the callin
 
 (defun get-sorted-pages (directory order)
   "String :ascending|:descending -> (String)
-Return the list of page paths of pages in DIRECTORY from the *DB*, sorted by date in ORDER."
+Return the list of page paths of pages in DIRECTORY from the *DB*, sorted by date in ORDER.
+
+TODO: Currently returns all pages in DIRECTORY and its subdirectories. There should be an option to specify this behaviour"
   (let ((regex (create-scanner (format nil "^~a" (pathname-as-directory directory))))
 	(time-sort (ecase order
 		     (:ascending #'timestamp<)
 		     (:descending #'timestamp>))))
-    (remove
-     (concatenate 'string (namestring (pathname-as-directory directory)) "index")
+    (remove-if (lambda (x) (scan "index$" x))
      (mapcar #'car
 	     (sort (iter (for (path entry) in-hashtable *db*)
 			 (when (and (scan regex (namestring path)))
 			   (collect (cons (namestring path) entry))))
 		   (lambda (a b) (funcall time-sort
 					  (content-entry-date (cdr a))
-					  (content-entry-date (cdr b))))))
-     :test #'equal)))
+					  (content-entry-date (cdr b)))))))))
 
 (defun get-pages (directory &key number (start 0) (order :descending))
   "String &key (number Integer) (start Integer) (order :descending|:ascending)
