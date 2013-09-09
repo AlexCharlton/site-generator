@@ -38,6 +38,8 @@
   "A list of (Entry . Paths) denoting entries that depend on the files in the paths.")
 (defvar *templates* nil
   "A list of templates path and write-date dependancy lists, as returned by WALK-TEMPLATES.")
+(defvar *new-pages* nil
+  "A list of paths pointing to pages that are new to this generation.")
 
 (defstruct content-entry
   "An record of a content file of the information that is used for generating the site and that should be known between other files. Stored in *DB*."
@@ -118,9 +120,11 @@ Determine if the *ROOT-DIR* is a site-generator directory."
   "nil -> nil
 Perform the steps necessary to ensure that the database is up to date."
   (setf *templates* (walk-templates)
-	*dependants* nil)
+	*dependants* nil
+	*new-pages* nil)
   (walk-site *content-dir* nil nil)
-  (resolve-dependencies))
+  (resolve-dependencies)
+  (resolve-deleted-pages))
 
 (defun walk-site (dir configs dir-slugs)
   "Pathname ((cons Pathname Timestamp)) Plist -> nil
@@ -177,6 +181,11 @@ Given a list of templates and their direct dependencies, return the list of temp
   "Pathspec ({(Pathname . Integer)}+) -> {(Pathname . Integer)}+
 Return the template located at PATH from a list TEMPLATES that is comprised of (pathname file-write-date) pairs."
   (find (pathname path) templates :key #'caar :test #'equal))
+
+(defun resolve-deleted-pages ()
+  (iter (for (path _) in-hashtable *db*)
+	(unless (file-exists-p (merge-pathnames path *content-dir*))
+	  (file-moved? path))))
 
 (defun update-site (needs-update)
   "((Pathname Entry (Pathname))) -> nil
@@ -240,7 +249,9 @@ Update the *DB* ENTRY of FILE when the given content file is new or has been upd
 		 :configs configs
 		 :pages (get-page-paths file (add-slugs (get-file-slugs file) dir-slugs))
 		 :old-pages (when entry
-			      (content-entry-old-pages entry)))))
+			      (content-entry-old-pages entry))))
+	  (when (not entry)
+	    (push relative-path *new-pages*)))
 	(when-let ((dependencies (get-data :depends)))
 	  (push (cons entry dependencies) *dependants*)))))
 
@@ -270,13 +281,14 @@ For each Entry in *DEPENDANTS*, check if its dependants have changed and, if any
   "Pathname Entry -> nil
 After deleting the old pages in the Entry, parse the file and for each language, write the appropriate page. Update the entry to reflect this."
   (delete-old-pages entry)
-  (let* ((*environment* (merge-environments
-			 (parse-page (merge-pathnames file *content-dir*))
-			 *environment*)))
+  (let ((*environment* (merge-environments
+			(parse-page (merge-pathnames file *content-dir*))
+			*environment*)))
     (iter (for lang in (getf *environment* :languages))
-	  (let ((*environment* (merge-environments (list :lang lang
-							 :current-file (namestring file))
-						   *environment*)))
+	  (let ((*environment* (merge-environments
+				(list :lang lang
+				      :current-file (namestring file))
+				*environment*)))
 	    (write-page (merge-pathnames (getf (content-entry-pages entry) lang)
 					 *site-dir*))))
     (setf (content-entry-needs-update entry) nil
@@ -309,6 +321,37 @@ Delete the files in the list of old pages contained in ENTRY."
   (iter (for (lang file) on (content-entry-old-pages entry) by #'cddr)
 	(when-let ((file (file-exists-p (merge-pathnames file *site-dir*))))
 	  (delete-file (merge-pathnames file *site-dir*)))))
+
+(defun file-moved? (file)
+  "Called when a content file no longer exists. If there are any new pages this generation, one of those may have been a file that was moved. Prompt the user to select one of the new pages if it corresponds to a file that was moved in order to update the database. When no file is selected, or there are no new pages, the database entry is deleted."
+  (let+ (((&flet remove-entry ()
+	    (delete-old-pages (gethash file *db*))
+	    (remhash file *db*)
+	    (print-message "\"~a\" deleted from database." file)))
+	 ((&flet merge-entries (new-file)
+	    "This will get the new date wrong if the date has been changed between the old and the new entry."
+	    (let ((old-entry (gethash file *db*))
+		  (new-entry (gethash new-file *db*)))
+	      (setf (content-entry-creation-date new-entry) (content-entry-creation-date old-entry)
+		    (content-entry-date new-entry) (content-entry-date old-entry))
+	      (print-message "Merged database entries of \"~a\" with \"~a\"."
+			     file new-file)))))
+    (when *new-pages*
+      (progn
+	(print-message "The content file \"~a\" no longer exists, but may have moved. Enter in one of the following numbers to merge the database entry of the old file with the new one. A blank line removes the entry permanently." file)
+	(iter (for page in *new-pages*)
+	      (for i from 1)
+	      (format t "~a) ~a~%" i page))
+	(iter (for line = (read-line *standard-input* nil))
+	      (cond
+		((equal line "") (return))
+		((nth (1- (parse-integer line :junk-allowed t))
+		      *new-pages*)
+		 (merge-entries (nth (1- (parse-integer line :junk-allowed t))
+				     *new-pages*))
+		 (return))
+		(t (print-message "Enter a number or a blank line."))))))
+    (remove-entry)))
 
 (defun remove-empty-directories (dir)
   "Pathname -> nil
