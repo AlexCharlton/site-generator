@@ -879,9 +879,9 @@ These are both arguments that can be appended to variable definition (e.g. `:var
 - `toc-depth`
 
 ## Appendix D -- *site-generator* syntax
-Templates contain `$template-variables$` and `$(template expressions)`. When templates are expanded, these are replaced with the value of the variable or the result of the expression.
+Templates contain `$template-variables$` and `$(template expressions)`. When templates are expanded, these are replaced with the value of the variable or the result of the expression. Templates are located in the `template/` directory.
 
-Content files define configuration variables and content variables. The list of configuration variables can be seen in [appendix A](#appendix-a-configuration-variables). Variables are defined by starting a line with the name of the variable, prepended by a colon. Variables must be be preceeded by a blank line. Content variables can have additional arguments, appearing on the same line as the variable, in the form of key-value pairs separated by equal signs. E.g.:
+Content files define configuration variables and content variables. The list of configuration variables can be seen in [appendix A](#appendix-a-configuration-variables). Variables are defined by starting a line with the name of the variable, prepended by a colon. Variables must be preceded by a blank line. Content variables can have additional arguments, appearing on the same line as the variable, in the form of key-value pairs separated by equal signs. E.g.:
 
 ```
 :template
@@ -905,3 +905,5 @@ $(when (bound? some-content)
    "Even though some-content is bound, this will still
     never be printed, because some-content is set to nil"
 ```
+
+Content files are located in the `content/` directory. They may possess any name except for those starting with a `.` (i.e. hidden files) or bracketed by `#` symbols (i.e. Emacs auto-save files).
