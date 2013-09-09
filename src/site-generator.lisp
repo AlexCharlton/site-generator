@@ -20,8 +20,8 @@
    prev-page))
 
 (defconstant +version-major+ 0)
-(defconstant +version-minor+ 1)
-(defconstant +version-release+ 2)
+(defconstant +version-minor+ 2)
+(defconstant +version-release+ 0)
 
 ;;;; ## Primary interface
 ;; Directories site-generator expects
