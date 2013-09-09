@@ -351,7 +351,7 @@ Say we realize that we don't want the `<title>` of the page to be just the varia
 ```html
 <title>$(when (bound? title)
           (echo title " — "))
-	   $site-name$
+       $site-name$
 </title>
 ```
 
@@ -366,11 +366,11 @@ With our new-found Lisp skills, we decide to write the footer. We realize that w
 This is the end of the
 page$(when (bound? title)
        (echo " "
-	         (markup
-			   (echo "\"" title
-			         "\" (these should be curly quotes)")
-	           :output-format :markdown
-			   :markup :markdown))). 
+             (markup
+              (echo "\"" title
+                    "\" (these should be curly quotes)")
+              :output-format :markdown
+              :markup :markdown))). 
 
 :footer-text
 Ceci est la fin de la
@@ -389,7 +389,7 @@ We've gone a bit crazy with the English footer. The first part is the same as th
     ```html
 <title>$(if (bound? title)
             (echo title " — " site-name)
-		    site-name)
+            site-name)
 </title>
 ```
 
@@ -465,15 +465,15 @@ We will again have a template called `main.html`. This `main.html` is going to l
 ```commonlisp
 $(xml
    (:html
-     (:head
-       (:meta :charset "UTF-8")
-       (:title (str (when (bound? title)
-	                  (echo title " — ")))
-               (str site-name)))
-     (:body
-       (:header (:h1 (str site-name)))
-       (str nav)
-	   (str contents))))
+    (:head
+     (:meta :charset "UTF-8")
+     (:title (str (when (bound? title)
+                    (echo title " — ")))
+             (str site-name)))
+    (:body
+     (:header (:h1 (str site-name)))
+     (str nav)
+   (str contents))))
 ```
 
 So what's going on here? First, the template expression consists of `$(xml ...)`. `xml` is *site-generator*'s way of denoting that the following code is going to represent a tree of XML (which HTML is). All of the "functions" in that tree (`:html` `:head`, `:body`, etc.) will become HTML tags. Like HTML, these expressions are nested. Attributes of the tag are denoted like keyword arguments: `:attribute value`. So `(:meta :charset "UTF-8")` will turn into `<meta charset="UTF-8" />` The final elements in an HTML expression (that doesn't belong to an attribute) will become the content of that tag. So `(:div "Hi, there!" " Bye!")` would become `<div>Hi, there! Bye!</div>`. When these final values are not a literal string, but instead some other value (like a variable or a function call), we need to tell CL-WHO to treat it like a string. We do this with `str`. `(:body (str contents))` results in the HTML `<body>Whatever the variable contents is</body>`.
@@ -491,11 +491,11 @@ main.html
 
 :nav
 $(xml (:nav
-         (:ul 
-           (:li (:a :href (page-address "index")
-		            "Home"))
-           (:li (:a :href (page-address "archive")
-		            "Archives")))))
+       (:ul 
+        (:li (:a :href (page-address "index")
+                 "Home"))
+        (:li (:a :href (page-address "archive")
+                 "Archives")))))
 ```
 
 We're defining the `site-name` and `nav`, which are both required by `main.html`. We're also setting the default template to be `main.html`, as expected. The `nav` variable is using the same CL-WHO syntax to generate its HTML.
@@ -507,20 +507,22 @@ We know that each blog post is going to be part of a logical set of all the blog
 ```commonlisp
 :contents
 $(xml (:article (:h2 (str title))
-           (:div :class "article-info" 
-             (:div :class "author" (str author))
-	     (:div :class "date" (str (page-date :current))))
-	   (str (content))
-	   (:span :class "prev"
-	         (let ((prev (prev-page "pages")))
-		       (when prev
-			     (htm (:a :href (page-address prev)
-				          "Previous post")))))
- 	   (:span :class "next"
-	         (let ((next (next-page "pages")))
-		       (when next
-			     (htm (:a :href (page-address next)
-				          "Next post")))))))
+                (:div :class "article-info" 
+                      (:div :class "author"
+                            (str author))
+                      (:div :class "date"
+                            (str (page-date :current))))
+                (str (content))
+                (:span :class "prev"
+                       (let ((prev (prev-page "pages")))
+                         (when prev
+                           (htm (:a :href (page-address prev)
+                                    "Previous post")))))
+                (:span :class "next"
+                       (let ((next (next-page "pages")))
+                         (when next
+                           (htm (:a :href (page-address next)
+                                    "Next post")))))))
 
 :author
 Alex
@@ -586,20 +588,22 @@ As a reminder, `example-blog/content/pages/config` contains the following:
 ```commonlisp
 :contents
 $(xml (:article (:h2 (str title))
-           (:div :class "article-info" 
-             (:div :class "author" (str author))
-	     (:div :class "date" (str (page-date :current))))
-	   (str (content))
-	   (:span :class "prev"
-	         (let ((prev (prev-page "pages")))
-		       (when prev
-			     (htm (:a :href (page-address prev)
-				          "Previous post")))))
- 	   (:span :class "next"
-	         (let ((next (next-page "pages")))
-		       (when next
-			     (htm (:a :href (page-address next)
-				          "Next post")))))))
+                (:div :class "article-info" 
+                      (:div :class "author"
+                            (str author))
+                      (:div :class "date"
+                            (str (page-date :current))))
+                (str (content))
+                (:span :class "prev"
+                       (let ((prev (prev-page "pages")))
+                         (when prev
+                           (htm (:a :href (page-address prev)
+                                    "Previous post")))))
+                (:span :class "next"
+                       (let ((next (next-page "pages")))
+                         (when next
+                           (htm (:a :href (page-address next)
+                                    "Next post")))))))
 
 :author
 Alex
@@ -620,7 +624,7 @@ Is equal to `3`. In the above `(:span :class "prev" ...)`, we're setting the loc
 ```commonlisp
 (when prev
   (htm (:a :href (page-address prev)
-	       "Previous post")))
+           "Previous post")))
 ```
 
 Is saying that, when the variable `prev` exists (because there isn't always going to be a previous page, in the case that you are rendering the most recent page), output a link to the address of that previous page with the link text `"Previous post"`.
@@ -666,19 +670,19 @@ Archive
 :contents
 $(xml 
    (loop for page in (get-pages "pages")
-         do (htm
-		      (:article
-			    (:h2 (:a :href (page-address page)
-                         (str (page-title page))))
-                (:div :class "article-info"
-                  (:div :class "author"
-				        (str (page-author page)))
-	              (:div :class "date"
-					    (str (page-date page))))
-	            (:p (str (first-line
-				           (get-content page :content))))
-		        (:p (:a :href (page-address page)
-		                "Keep reading..."))))))
+      do (htm
+          (:article
+           (:h2 (:a :href (page-address page)
+                    (str (page-title page))))
+           (:div :class "article-info"
+                 (:div :class "author"
+                       (str (page-author page)))
+                 (:div :class "date"
+                       (str (page-date page))))
+           (:p (str (first-line
+                     (get-content page :content))))
+           (:p (:a :href (page-address page)
+                   "Keep reading..."))))))
 
 :depends
 pages/
@@ -711,27 +715,27 @@ Also notable is that we set the template to `rss.lisp`. Templates don't need to 
 ```commonlisp
 $(xml
    (:rss :version "2.0"
-	 (:channel 
-	   (:title "Example Blog")
-	   (:link "http://example-blog-url.com/")
-	   (:description "An example blog for site-generator")
-	   (:lastBuildDate (str (build-time)))
-	   (:language "en-us")
-	   (loop for page in (get-pages "pages" :number 2)
-	         do (htm
-			      (:item
-			        (:title (str (page-title page)))
-					(:link (str (page-address page)))
-					(:guid (str (page-address page)))
-					(:pubDate (str (page-date
-					                 page
-					                 :format +rfc+)))
-					(:description
-					  "<![CDATA[ "
-					  (str (markup (get-content page
-					                            :content)
-			                       :markup :markdown))
-					  " ]]>")))))))
+         (:channel 
+          (:title "Example Blog")
+          (:link "http://example-blog-url.com/")
+          (:description "An example blog for site-generator")
+          (:lastBuildDate (str (build-time)))
+          (:language "en-us")
+          (loop for page in (get-pages "pages" :number 2)
+             do (htm
+                 (:item
+                  (:title (str (page-title page)))
+                  (:link (str (page-address page)))
+                  (:guid (str (page-address page)))
+                  (:pubDate (str (page-date
+                                  page
+                                  :format +rfc+)))
+                  (:description
+                   "<![CDATA[ "
+                   (str (markup (get-content page
+                                             :content)
+                                :markup :markdown))
+                   " ]]>")))))))
 
 :depends
 pages/
@@ -744,19 +748,19 @@ Now that we have our RSS feed, we should add it to the header of our `main.html`
 ```commonlisp
 $(xml
    (:html
-     (:head
-       (:meta :charset "UTF-8")
-       (:link :href "/static/style.css"
-	          :rel "stylesheet"
-			  :type "text/css")
-       (:link :href "/rss.xml"
-	          :rel "alternate"
-			  :type "application/rss+xml"
-              :title "Example blog RSS feed")
-       (:title (str (when (bound? title)
-	                  (echo title " — ")))
-               (str site-name)))
-     (:body (str contents))))
+    (:head
+     (:meta :charset "UTF-8")
+     (:link :href "/static/style.css"
+            :rel "stylesheet"
+            :type "text/css")
+     (:link :href "/rss.xml"
+            :rel "alternate"
+            :type "application/rss+xml"
+            :title "Example blog RSS feed")
+     (:title (str (when (bound? title)
+                    (echo title " — ")))
+             (str site-name)))
+    (:body (str contents))))
 ```
 	 
 ### Static files
@@ -898,6 +902,6 @@ nil
 
 :other-content
 $(when (bound? some-content)
-   "Even though, some-content is bound, this will still
-   never be printed, because some-content is set to nil"
+   "Even though some-content is bound, this will still
+    never be printed, because some-content is set to nil"
 ```
