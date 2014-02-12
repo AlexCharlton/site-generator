@@ -357,7 +357,8 @@ Delete the files in the list of old pages contained in ENTRY."
   "Pathname -> nil
 Recurs depth first through a directory tree, deleting all directories that do not contain any files."
   (iter (for file in (list-directory dir :follow-symlinks nil))
-	(when (directory-pathname-p file)
+	(when (and (directory-pathname-p file)
+		   (not (equal (parent-directory file) "static")))
 	  (remove-empty-directories file)))
   (handler-case (unless (list-directory dir)
 		  (delete-directory dir)
