@@ -648,9 +648,9 @@ Return an HTML list of links to the current page in all languages."
       (:ul :class ul-class
 	   (loop for lang in (get-data :languages)
 	      do (if (eq lang (get-data :lang))
-		     (htm (:li :class selected-class (str lang)))
+		     (htm (:li :class selected-class (str (symbol-name lang))))
 		     (htm (:li (:a :href (page-address page :lang lang)
-				      (str lang))))))))))
+                                   (str (symbol-name lang)))))))))))
 
 (defun get-content (page name)
   "String Keyword -> (values X Keyword Plist)
