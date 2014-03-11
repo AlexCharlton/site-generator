@@ -1,6 +1,7 @@
 ;;;; site-generator.asd
 
 (asdf:defsystem #:site-generator
+  :version "0.3.0"
   :serial t
   :description "Describe site-generator here"
   :author "Alex Charlton <alex.n.charlton@gmail.com>"
