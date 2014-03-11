@@ -159,21 +159,20 @@ Return a list of n ELTs."
 (defconstant +rfc+ +rfc-1123-format+)
 
 (defun make-time (element-list fallback)
-  (let ((unit-accessor (list :second #'timestamp-second
-			     :minute #'timestamp-minute
-			     :hour #'timestamp-hour
-			     :day #'timestamp-day
-			     :month #'timestamp-month
-			     :year #'timestamp-year)))
+  (let ((t-components (list :second (timestamp-second fallback)
+			    :minute (timestamp-minute fallback)
+			    :hour (timestamp-hour fallback)
+			    :day (timestamp-day fallback)
+			    :month (timestamp-month fallback)
+			    :year (timestamp-year fallback))))
     (iter (for (unit val) on element-list by #'cddr)
-	  (for base-time first fallback then time)
-	  (for time = (timestamp+ (timestamp-
-				   base-time
-				   (funcall (getf unit-accessor unit)
-					    fallback)
-				   unit)
-				  val unit))
-	  (finally (return time)))))
+	  (setf (getf t-components unit) val))
+    (encode-timestamp 0 (getf t-components :second)
+                      (getf t-components :minute)
+                      (getf t-components :hour)
+                      (getf t-components :day)
+                      (getf t-components :month)
+                      (getf t-components :year))))
 
 (defun parse-date (s)
   "String -> Plist
