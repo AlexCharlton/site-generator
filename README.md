@@ -894,6 +894,19 @@ content-variable.
 This is more of the same content
 ```
 
+Lines that begin with a semi-colon are ignored. This includes lines that would otherwise be part of content. If you want some content to begin with a semi-colon, just add a space before it. E.g.:
+
+```
+;; This is a site generator file
+:content-variable lang=en markup=markdown
+This is some content that is assigned to the variable
+content-variable.
+; This will not show up in content-variable
+
+ ; This will show up in content-variable
+```
+
+
 `nil` is a special content value, that will set the value of the content to Common Lisp's `nil`, e.g.:
 
 ```
@@ -909,6 +922,9 @@ $(when (bound? some-content)
 Content files are located in the `content/` directory. They may possess any name except for those starting with a `.` (i.e. hidden files) or bracketed by `#` symbols (i.e. Emacs auto-save files).
 
 ## Appendix E -- Changelog
+### v0.4.0
+- Config files can now contain comments
+
 ### v0.3.0
 - Make sure `static` directory stays current
 - Fix bug with time setting

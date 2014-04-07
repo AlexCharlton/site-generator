@@ -193,18 +193,21 @@ Keyword variables are delineated by a blank newline before IS-VARIABLE? matches.
     (with-open-file (f file)
       (iter (for line = (read-line f nil 'eof))
 	    (until (eq line 'eof))
-	    (let ((variable? (is-variable? line)))
-	      (if (and variable? last-line-blank?)
-		  (let+ (((variable &rest args) variable?))
-		    (push variable ret)
-		    (push args ret)
-		    (push "" ret))
-		  (if ret
-		      (setf (car ret) (concatenate 'string (car ret) line
-						   '(#\Newline)))
-		  (when (string/= (trim line) "")
-		      (error "Not a well-formed content file: ~a. No initial variable found." file)))))
-	    (setf last-line-blank? (string= (trim line) ""))))
+	    (let ((variable? (is-variable? line))
+                  (comment? (is-comment? line)))
+	      (cond
+                ((and variable? last-line-blank?)
+                 (let+ (((variable &rest args) variable?))
+                       (push variable ret)
+                       (push args ret)
+                       (push "" ret)))
+                (comment? nil)
+                (ret (setf (car ret) (concatenate 'string (car ret) line
+                                                  '(#\Newline))))
+                (t (when (string/= (trim line) "")
+                     (error "Not a well-formed content file: ~a. No initial variable found." file))))
+              (setf last-line-blank? (or (string= (trim line) "")
+                                       comment?)))))
     (reverse ret)))
 
 (defun is-variable? (line)
@@ -217,6 +220,10 @@ Returns a keyword and a list of keyword arguments if the line begins with a keyw
 	  (cons (string->keyword var) args)
 	  (error "Odd number of keyword arguments to variable ~a: ~s"
 		 var line)))))
+
+(defun is-comment? (line)
+  (and (> (length line) 0)
+       (string= (subseq line 0 1) ";")))
 
 (defun parse-args (args)
   "String -> (Keyword)
