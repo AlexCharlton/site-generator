@@ -20,7 +20,7 @@
    prev-page))
 
 (defconstant +version-major+ 0)
-(defconstant +version-minor+ 4)
+(defconstant +version-minor+ 5)
 (defconstant +version-release+ 0)
 
 ;;;; ## Primary interface

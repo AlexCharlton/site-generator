@@ -922,6 +922,9 @@ $(when (bound? some-content)
 Content files are located in the `content/` directory. They may possess any name except for those starting with a `.` (i.e. hidden files) or bracketed by `#` symbols (i.e. Emacs auto-save files).
 
 ## Appendix E -- Changelog
+### v0.5.0
+- Test server listens to 0.0.0.0 rather than 127.0.0.1
+
 ### v0.4.0
 - Config files can now contain comments
 
