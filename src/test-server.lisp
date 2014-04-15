@@ -35,7 +35,7 @@ Watch the site for changes and update it when they occur."
 
 (defclass acceptor (hunchentoot:acceptor)
   ()
-  (:default-initargs :address "127.0.0.1"
+  (:default-initargs :address "0.0.0.0"
     :access-log-destination nil
     :message-log-destination nil))
 
