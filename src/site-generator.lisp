@@ -92,8 +92,9 @@ If there are any, run the command specified by the :COMMANDS variable in the top
   (when-let ((commands (getf (parse-content (merge-pathnames "config" *content-dir*))
 			     :commands)))
     (iter (for command in commands)
-	  (asdf/interface::run-program command 
-					      :output :interactive))))
+	  (make-thread #'(lambda ()
+                           (asdf/interface::run-program command 
+                                                        :output :interactive))))))
 
 (defun set-root-dir (dir)
   "Pathspec -> nil
