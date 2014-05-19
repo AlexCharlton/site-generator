@@ -68,7 +68,7 @@
     :directory-slug nil
     :lang t
     :current-file t)
-"The list of variables that are related to configuration and are not treated as content, i.e. they are not considered to belong to a language and will not be marked up. Variables set to nil will be parsed like content and are present to ensure that these variables can be excluded from content.")
+"The list of variables that are related to configuration and are not treated as content, i.e. they are not considered to belong to a language and will not be marked up. Variables set to nil will be parsed like content and are present to ensure that these variables can be excluded from content. Variables set to t are reserved and are not parsed.")
 
 (defun get-language (env)
   "Plist -> Keyword
