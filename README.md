@@ -36,7 +36,7 @@ This documentation is easiest to read at [*site-generator*'s home](http://alex-c
 
 
 # Getting *site-generator*
-Using a stand-alone version of *site-generator* is the easiest way to get started. Just download the executable file ([Linux](http://alex-charlton.com/static/downloads/Linux/site-generator), [Mac](http://alex-charlton.com/static/downloads/Mac/site-generator)) and place it in a directory that is in your `PATH`. Make sure you have [Rsync](http://rsync.samba.org/) and [Pandoc](http://johnmacfarlane.net/pandoc/) installed on your computer if you want to use the publish or markup features.
+Using a stand-alone version of *site-generator* is the easiest way to get started. Just download the executable file ([Linux (64 bit)](http://alex-charlton.com/static/downloads/Linux/site-generator), [Mac](http://alex-charlton.com/static/downloads/Mac/site-generator)) and place it in a directory that is in your `PATH`. Make sure you have [Rsync](http://rsync.samba.org/) and [Pandoc](http://johnmacfarlane.net/pandoc/) installed on your computer if you want to use the publish or markup features.
 
 ## Source
 The BSD licenced source code for *site-generator* can be found on [GitHub](https://github.com/AlexCharlton/site-generator).
@@ -922,6 +922,9 @@ $(when (bound? some-content)
 Content files are located in the `content/` directory. They may possess any name except for those starting with a `.` (i.e. hidden files) or bracketed by `#` symbols (i.e. Emacs auto-save files).
 
 ## Appendix E -- Changelog
+### v0.6.0
+- Commands are run asynchronously
+
 ### v0.5.0
 - Test server listens to 0.0.0.0 rather than 127.0.0.1
 
