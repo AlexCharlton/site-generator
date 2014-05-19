@@ -808,6 +808,14 @@ Sometimes, your site may depend on having some other commands run for it to be b
 :commands
 coffee --compile coffee-script/hello.coffee \
        --output static/js/
+```
+
+Commands are executed asynchronously. If you wish to run multiple commands in order, separate them with a semicolon (possibly followed with an escaped newline, if desired). E.g.:
+
+```
+:commands
+coffee --compile coffee-script/hello.coffee \
+       --output static/js/                 ;\
 echo "CoffeeScript file compiled"
 ```
 
