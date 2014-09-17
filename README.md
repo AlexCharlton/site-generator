@@ -797,7 +797,16 @@ When *site-generator* is run with the `--publish` flag (`site-generator -p [DIRE
 alexcharlton@alex-charlton.com:alex-charlton.com/
 ```
 
-Be careful, though: *site-generator* deletes any content that is present in that directory on the server!
+Be careful, though: *site-generator* deletes any content that is present in that directory on the server! If you have files you don’t want to touch, you can add one or more files or directories to the `:exclude` variable. This should be a line separated list of Rsync patterns. `:exclude` will also prevent *site-generator* from uploading any files or directories that you don’t want to. E.g.:
+
+```
+:exclude
+*.php
+secret-local-file.html
+```
+
+This example could be used in the case that you have PHP files on the server that you don’t want deleted, and you also don’t want to upload `secret-local-file.html`.
+
 
 ## Executing additional commands
 Sometimes, your site may depend on having some other commands run for it to be built properly. A common example of this is needing to compile CoffeeScript, et al., to Javascript. *site-generator* makes it easy to automate these commands through the `:commands` variable, which must be placed in the top-level config file.
@@ -833,6 +842,7 @@ Configuration variables are variables that are defined in config or content file
 - `:default-language`: A language code that is set to be the default language for the site. Defaults to `en`. May only be defined in the top-level config file.
 - `:depends`: The list of paths and files, relative to the content directory, that the files for which this variable applies depend upon for generation. Every time a file that is depended upon is modified, the file that depends on it will be regenerated.
 - `:directory-slug`: The string that will be used to represent the URL of the directory of the config file where `directory-slug` was defined. May only be defined in a config file.
+- `:exclude`: A list of line-separated Rsync pattern strings, indicating which files or directories should be excluded while publishing the site. This can be helpful when there are files on the server that you don’t want to be touched.
 - `:extension`: The file extension that will be used for the affected pages, when they are generated.
 - `:highlight`: `true` or `false` -- whether or not Pandoc will highlight code blocks that have a language specified. The highlighting will only be visible with an appropriate CSS file. See the [example code highlighting CSS file](https://github.com/AlexCharlton/site-generator/tree/master/examples/code-highlight.css). Defaults to `true`.
 - `:languages`: A space or comma separated list of language codes. A site for every language code listed will be generated. Defaults to `en`. May only be defined in the top-level config file.
