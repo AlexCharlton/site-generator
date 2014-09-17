@@ -59,6 +59,7 @@
 			      (list var args)))
 			  (lines x)))
     :server ,#'first-line
+    :exclude ,#'(lambda (x) (mapcar #'trim (lines x)))
     :extension ,#'(lambda (x) (first (words x)))
     :depends ,#'(lambda (x) (mapcar #'trim (lines x)))
     :cl-environment ,#'identity
