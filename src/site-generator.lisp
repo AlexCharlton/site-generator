@@ -21,7 +21,7 @@
    static-files))
 
 (defconstant +version-major+ 0)
-(defconstant +version-minor+ 7)
+(defconstant +version-minor+ 8)
 (defconstant +version-release+ 0)
 
 ;;;; ## Primary interface
