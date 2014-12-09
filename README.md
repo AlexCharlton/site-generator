@@ -881,6 +881,7 @@ On top of the functions supplied by [Common Lisp](http://www.lispworks.com/docum
 - `(page-last-modified PAGE &key LANGUAGE FORMAT)`: Return the string corresponding to the formatted date of the last modification time of the content file `PAGE` (relative to the content directory). `LANGUAGE` has no effect on this function. For a full description of the `FORMAT` variable, see the [Dates](#dates) section.
 - `(page-title PAGE &key LANGUAGE)`: Return the string corresponding to the title of the content file `PAGE` (relative to the content directory) for `LANGUAGE` (which defaults to the current language)
 - `(prev-page PAGE-DIRECTORY &optional PAGE)`: Return the string representing the path of the content file (relative to the content-directory) that chronologically precedes the current page (or `PAGE`) and that is located in `PAGE-DIRECTORY`.
+- `(static-files DIRECTORY)`: Return a list strings representing all of the files (and directories) in the given `DIRECTORY`, relative to the static directory.
 - `(words STRING)`: Return the list of strings that are separated by whitespace in `STRING`.
 - `(xml EXPRESSION)`: A macro wrapping CL-WHO's `WITH-HTML-OUTPUT-TO-STRING`, so that only the XML content is required, and the appropriate prologue is output when the leading keyword is `:HTML` or `RSS`.
 
