@@ -17,7 +17,8 @@
    get-content
    get-pages
    next-page
-   prev-page))
+   prev-page
+   static-files))
 
 (defconstant +version-major+ 0)
 (defconstant +version-minor+ 7)

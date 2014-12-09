@@ -129,3 +129,10 @@ Return the page in DIRECTORY chronologically previous to PAGE."
     (when (and position
 	       (plusp position ))
       (elt pages (1- position)))))
+
+(defun static-files (directory)
+  "String -> (String)"
+  (iter (for file in (list-directory (merge-pathnames *static-dir* directory)))
+        (unless (hidden-p file)
+          (collect (concatenate 'string "/"
+                                (namestring (directory-minus file *root-dir*)))))))
