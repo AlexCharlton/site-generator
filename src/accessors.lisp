@@ -132,7 +132,8 @@ Return the page in DIRECTORY chronologically previous to PAGE."
 
 (defun static-files (directory)
   "String -> (String)"
-  (iter (for file in (list-directory (merge-pathnames *static-dir* directory)))
+  (iter (for file in (list-directory (merge-pathnames (pathname-as-directory directory)
+                                                      *static-dir*)))
         (unless (hidden-p file)
           (collect (concatenate 'string "/"
                                 (namestring (directory-minus file *root-dir*)))))))
