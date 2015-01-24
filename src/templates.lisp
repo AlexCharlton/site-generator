@@ -92,9 +92,12 @@ If the following character in INPUT is anything else, it may be the start of a v
 	 ((&flet expand-variable-or-backtrack ()
 	    (iter (for c = (next-char))
 		  (cond
-		    ((or (whitespace-char-p c)
-			 (eq c 'eof))
+		    ((or (equal c 'eof)
+                         (whitespace-char-p c))
 		     (backtrack))
+                    ((and (char= c *template-delimiter*)
+                          (= (length read-in) 2))
+                     (backtrack))
 		    ((char= c *template-delimiter*)
 		     (return (intern (string-upcase
 				      (concatenate
