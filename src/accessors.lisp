@@ -127,7 +127,7 @@ Return the page in DIRECTORY chronologically previous to PAGE."
 	 (page (or page (get-data :current-file)))
 	 (position (position page pages :test #'equal)))
     (when (and position
-	       (plusp position ))
+	       (plusp position))
       (elt pages (1- position)))))
 
 (defun static-files (directory)
