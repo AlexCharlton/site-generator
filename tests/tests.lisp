@@ -31,8 +31,18 @@
 		  (expand-string "Foo $foo$.")))
      (is (string= "Foo baz."
 		  (expand-string "Foo $baz$.")))
+     (is (string= "$hi$"
+		  (expand-string "\\$hi$")))
+     (is (string= "$$"
+        	  (expand-string "$$")))
+     (is (string= "$x$"
+        	  (expand-string "\\$x$")))
+     (is (string= "$$"
+        	  (expand-string "\\$\\$")))
      (is (string= "$ hello"
 		  (expand-string "$ hello")))
+     (is (string= "he$bar"
+		  (expand-string "he$bar")))
      (is (string= "$hello there$"
 		  (expand-string "$hello there$")))
      (is (string= "$hello"
