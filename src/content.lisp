@@ -298,12 +298,17 @@ When :TOC is set, call GET-PANDOC-TOC and replace any strings of {{{toc}}} (that
 
 If the template doesn't exist, create it."
   (let+ (((&flet create-toc-template (dir)
-	    (print-message "No Pandoc toc template. Creating at ~a (root permission may be necessary)" dir)
+	    (print-message "No Pandoc toc template. Trying to create at ~a" dir)
+            (ensure-directories-exist dir)
 	    (with-open-file (s (merge-pathnames "toc.html" dir)
-			       :direction :output :if-exists :supersede)
+			       :direction :output
+                               :if-does-not-exist :create
+                               :if-exists :supersede)
 	      (write-line "$toc$" s))
 	    (with-open-file (s (merge-pathnames "toc.html5" dir)
-			       :direction :output :if-exists :supersede)
+			       :direction :output
+                               :if-does-not-exist :create
+                               :if-exists :supersede)
 	      (write-line "$toc$" s)))))
     (file-position file-stream 0)
     (let ((toc (let ((proc (sb-ext:run-program
@@ -321,10 +326,9 @@ If the template doesn't exist, create it."
 			 (princ line out))
 		   (sb-ext:process-close proc)))))
       (if (register-groups-bind (dir)
-	      ("^pandoc: (.+)toc.html5?" toc)
-	    (create-toc-template dir))
-	  (error "Fuuuuuu")
-	  ;(get-pandoc-toc file-stream args)
+	      ("([^ ]+)toc.html5?$" toc)
+	    (create-toc-template (merge-pathnames dir "~/.pandoc/")))
+	  (get-pandoc-toc file-stream args)
 	  toc))))
 
 #-sbcl
