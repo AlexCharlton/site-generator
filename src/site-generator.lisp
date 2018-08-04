@@ -1,7 +1,7 @@
 (in-package :site-generator)
 
 (eval-when (:execute :load-toplevel :compile-toplevel)
-  (com.dvlsoft.clon:nickname-package) ; Create CLON nickname
+  (net.didierverna.clon:nickname-package) ; Create CLON nickname
   (enable-read-macros)) ; For local-time
 
 (setf (html-mode) :html5
