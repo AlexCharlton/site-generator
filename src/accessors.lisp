@@ -62,7 +62,7 @@ Return the datestring formatted as per FORMAT (see local-time)."
   "String &keys (lang Keyword) (format (Keyword or String or (Keyword Integer &optional Character)))-> String"
   (format-timestring nil (universal-to-timestamp date) :format format))
 
-(defun other-languages (&key (ul-class "languages") (selected-class "current-langage"))
+(defun other-languages (&key (ul-class "languages") (selected-class "current-language"))
   "String &key (ul-class String) (selected-class String) -> String
 Return an HTML list of links to the current page in all languages."
   (let ((page (get-data :current-file)))
