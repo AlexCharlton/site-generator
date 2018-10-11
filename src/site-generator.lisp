@@ -141,7 +141,7 @@ Recursively walk a site, tracking and parsing configs, working out slugs and cal
 	 (dir-slugs (add-slugs (get-dir-slugs config config-contents) dir-slugs)))
     (iter (for file in (list-directory dir))
 	  (unless (or (hidden-p file)
-		      (scan "^#.+#$" (pathname-name file)))
+		      (scan "(^#.+#$|\~$)" (pathname-name file)))
 	    (if (directory-pathname-p file)
 		(walk-site file configs dir-slugs)
 		(unless (equal (pathname-name file)
