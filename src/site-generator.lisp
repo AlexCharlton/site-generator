@@ -534,6 +534,7 @@ For more information, visit http://alex-charlton.com/projects/site-generator")
   (flag :short-name "v" :long-name "version"
 	:description "Print version number and exit."))
 
+
 (defun main (argv)
   "String -> nil
 Entry point. Perform the relevant action based on the command line options."
@@ -563,6 +564,9 @@ Entry point. Perform the relevant action based on the command line options."
 		 (run-test-server dir port) 
 		 (generate-site dir))))
     (error (e) (format t "Error: ~a~%" e))))
+
+(defun main-asdf-build-wrapper ()
+  (main ""))
 
 (defun get-site-dir ()
   "nil -> Pathname
