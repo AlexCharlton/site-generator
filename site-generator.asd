@@ -1,5 +1,8 @@
 ;;;; site-generator.asd
 
+(defmethod asdf:perform ((o asdf:image-op) (c asdf:system))
+  (uiop:dump-image (asdf:output-file o c) :executable T :compression T))
+
 (asdf:defsystem #:site-generator
   :version "0.8.1"
   :serial t
@@ -19,7 +22,10 @@
   :in-order-to ((test-op (load-op :site-generator-test)))
   :perform (test-op :after (op c)
 		    (funcall (intern (string '#:run!) :it.bese.fiveam)
-			     :site-generator)))
+			     :site-generator))
+  :build-operation "asdf:program-op"
+  :build-pathname "../site-generator"
+  :entry-point "site-generator:main-asdf-build-wrapper")
 
 (asdf:defsystem :site-generator-test
   :author "Alex Charlton <alex.n.charlton@gmail.com>"
