@@ -42,12 +42,14 @@ Watch the site for changes and update it when they occur."
 (defmethod hunchentoot:acceptor-dispatch-request ((acceptor acceptor) request)
   "Serve up a static file, with 'index.html' being served when a directory is being requested."
   (let* ((uri (subseq (hunchentoot:script-name request) 1))
-	(file (merge-pathnames uri *site-dir*)))
-    (when (file-exists-p file)
+	 (file (merge-pathnames uri *site-dir*)))
+    ;; bind pathspec so we later can't test if it is a directory
+    (when-let (pathspec (file-exists-p file))
       (hunchentoot:handle-static-file
-       (if (eq (file-kind file) :directory)
-	   (merge-pathnames "index.html" (pathname-as-directory file))
-	   file)))))
+       ;; directories does not have a name part
+       (if (pathname-name pathspec)
+	   file
+	   (merge-pathnames "index.html" (pathname-as-directory file)))))))
 
 (defun start-server (port)
   "Integer -> nil
