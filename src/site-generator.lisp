@@ -358,15 +358,18 @@ Delete the files in the list of old pages contained in ENTRY."
 (defun remove-empty-directories (dir)
   "Pathname -> nil
 Recurs depth first through a directory tree, deleting all directories that do not contain any files."
+
+  ;; guesing this whole thing could be replaced with call to
+  ;; delete-directory-tree from uiop instead of doing this walking of
+  ;; the directory structure manually  
   (iter (for file in (list-directory dir :follow-symlinks nil))
 	(when (and (directory-pathname-p file)
 		   (not (equal (parent-directory file) "static")))
 	  (remove-empty-directories file)))
   (handler-case (unless (list-directory dir)
-		  (delete-directory dir)
+		  (uiop:delete-empty-directory dir)
 		  (print-message "Removing unused directory: ~a"
-				 (directory-minus dir *site-dir*)))
-    (osicat-posix:enotdir () nil)))
+				 (directory-minus dir *site-dir*)))))
 
 (defun get-file-slugs (content-file)
   "Pathname -> Plist
