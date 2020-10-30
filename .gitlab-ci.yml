@@ -1,0 +1,29 @@
+image: daewok/lisp-devel
+
+before_script:
+  - ls /builds/jimhansson/site-generator/.git/
+  - apt-get update -qy
+  - apt-get install -y git-core pandoc
+  - cd ~/quicklisp/local-projects/
+  - git clone https://gitlab.com/jimhansson/site-generator
+
+build:
+  script:
+    # we start by making sure our dependencies are present.
+    - sbcl --eval "(ql:quickload :let-plus)"
+    - sbcl --eval "(ql:quickload :iterate)"
+    - sbcl --eval "(ql:quickload :hunchentoot)"
+    - sbcl --eval "(ql:quickload :net.didierverna.clon)"
+    - sbcl --eval "(ql:quickload :cl-ppcre)"
+    - sbcl --eval "(ql:quickload :cl-fad)"
+    - sbcl --eval "(ql:quickload :bordeaux-threads)"
+    - sbcl --eval "(ql:quickload :osicat)"
+    - sbcl --eval "(ql:quickload :cl-who)"
+    - sbcl --eval "(ql:quickload :local-time)"
+    - sbcl --eval "(ql:quickload :fiveam)"
+    # run tests
+    - sbcl --eval "(asdf:test-system :site-generator)"
+    # build binary
+    - sbcl --eval "(asdf:operate :build-op :site-generator)"
+    # upload binary
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ~/quicklisp/local-projects/site-generator/site-generator ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt'
