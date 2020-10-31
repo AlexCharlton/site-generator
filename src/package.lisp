@@ -4,7 +4,7 @@
   (:nicknames :sg)
   (:use #:cl #:iterate #:let-plus #:alexandria #:cl-fad #:cl-ppcre #:bordeaux-threads #:cl-who #:local-time)
   (:import-from #:osicat
-		#:make-link #:unmerge-pathnames)
+		#:make-link)
   (:export #:main-asdf-build-wrapper)
   (:shadowing-import-from #:cl-fad
 			  #:copy-file #:copy-stream))
