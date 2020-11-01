@@ -2,7 +2,7 @@ image: daewok/lisp-devel
 
 before_script:
   - apt-get update -qy
-  - apt-get install pandoc
+  - apt-get install pandoc -y
   - cd ~/quicklisp/local-projects/
   - cp ${CI_PROJECT_DIR} .
 
