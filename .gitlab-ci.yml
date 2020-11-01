@@ -17,7 +17,6 @@ build:
     - sbcl --eval "(ql:quickload :cl-ppcre)"
     - sbcl --eval "(ql:quickload :cl-fad)"
     - sbcl --eval "(ql:quickload :bordeaux-threads)"
-    - sbcl --eval "(ql:quickload :osicat)"
     - sbcl --eval "(ql:quickload :cl-who)"
     - sbcl --eval "(ql:quickload :local-time)"
     - sbcl --eval "(ql:quickload :fiveam)"
