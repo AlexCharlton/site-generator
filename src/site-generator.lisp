@@ -189,6 +189,17 @@ Return the template located at PATH from a list TEMPLATES that is comprised of (
 	(unless (file-exists-p (merge-pathnames path *content-dir*))
 	  (file-moved? path))))
 
+(defun make-link (link-name target)
+  "creates a link with name link-name to target by calling the shell"
+  (handler-bind
+      ((uiop:subprocess-error
+	(lambda (e)
+	  (format *standard-output*
+		  "Could not create link ~a to ~a, got error code ~a~%"
+		  link-name target (uiop:subprocess-error-code e))
+	  (invoke-restart 'continue))))
+    (uiop:run-program `("ln" "-s" ,(namestring target) ,(namestring link-name)) :force-shell nil)))
+
 (defun update-site (needs-update)
   "((Pathname Entry (Pathname))) -> nil
 Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDATE), removing empty directories, and writing the database to disk when done."
@@ -212,7 +223,7 @@ Generate each page in NEEDS-UPDATE (which are tuples as returned from NEEDS-UPDA
     (ensure-directories-exist *site-dir*)
     (when (directory-exists-p (merge-pathnames "static/" *site-dir*))
       (delete-file (merge-pathnames "static/" *site-dir*)))
-    (make-link (merge-pathnames "static" *site-dir*) :target *static-dir*)
+    (make-link (merge-pathnames "static" *site-dir*) *static-dir*)
     (iter (for config in configs)
 	  (gen-site (reverse config) nil))
     (remove-empty-directories *site-dir*)
@@ -358,15 +369,18 @@ Delete the files in the list of old pages contained in ENTRY."
 (defun remove-empty-directories (dir)
   "Pathname -> nil
 Recurs depth first through a directory tree, deleting all directories that do not contain any files."
+
+  ;; guesing this whole thing could be replaced with call to
+  ;; delete-directory-tree from uiop instead of doing this walking of
+  ;; the directory structure manually  
   (iter (for file in (list-directory dir :follow-symlinks nil))
 	(when (and (directory-pathname-p file)
 		   (not (equal (parent-directory file) "static")))
 	  (remove-empty-directories file)))
   (handler-case (unless (list-directory dir)
-		  (delete-directory dir)
+		  (uiop:delete-empty-directory dir)
 		  (print-message "Removing unused directory: ~a"
-				 (directory-minus dir *site-dir*)))
-    (osicat-posix:enotdir () nil)))
+				 (directory-minus dir *site-dir*)))))
 
 (defun get-file-slugs (content-file)
   "Pathname -> Plist
