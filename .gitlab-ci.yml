@@ -25,5 +25,5 @@ build:
     # build binary
     - sbcl --eval "(asdf:operate :build-op :site-generator)"
     # upload binary
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ~/quicklisp/local-projects/site-generator/site-generator ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/site-generator/${CI_COMMIT_REF_NAME}/site-generator'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ~/quicklisp/local-projects/site-generator/site-generator ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/site-generator-${CI_COMMIT_REF_NAME}/0.0.1/site-generator'
  
